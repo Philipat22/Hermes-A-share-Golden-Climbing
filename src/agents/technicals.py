@@ -379,19 +379,21 @@ def weighted_signal_combination(signals, weights):
     signal_values = {"bullish": 1, "neutral": 0, "bearish": -1}
 
     weighted_sum = 0
-    total_confidence = 0
+    total_weight = 0
 
     for strategy, signal in signals.items():
+        if signal["signal"] == "neutral":
+            continue  # neutral doesn't dilute directional signals
         numeric_signal = signal_values[signal["signal"]]
         weight = weights[strategy]
         confidence = signal["confidence"]
 
         weighted_sum += numeric_signal * weight * confidence
-        total_confidence += weight * confidence
+        total_weight += weight
 
-    # Normalize the weighted sum
-    if total_confidence > 0:
-        final_score = weighted_sum / total_confidence
+    # Normalize by total active weight (not weighted confidence)
+    if total_weight > 0:
+        final_score = weighted_sum / total_weight
     else:
         final_score = 0
 

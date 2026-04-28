@@ -22,7 +22,7 @@ services:
     image: ai-hedge-fund
     volumes:
       - ../.env:/app/.env
-    command: python src/main.py --ticker AAPL,MSFT,NVDA
+    command: python src/main_astock.py --ticker 600519.SH,000858.SZ,000568.SZ
     environment:
       PYTHONUNBUFFERED: "1"
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
@@ -37,22 +37,7 @@ services:
     image: ai-hedge-fund
     volumes:
       - ../.env:/app/.env
-    command: python src/main.py --ticker AAPL,MSFT,NVDA --show-reasoning
-    environment:
-      PYTHONUNBUFFERED: "1"
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
-      PYTHONPATH: /app
-    tty: true
-    stdin_open: true
-
-  hedge-fund-ollama:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    image: ai-hedge-fund
-    volumes:
-      - ../.env:/app/.env
-    command: python src/main.py --ticker AAPL,MSFT,NVDA --ollama
+    command: python src/main_astock.py --ticker 600519.SH,000858.SZ,000568.SZ --show-reasoning
     environment:
       PYTHONUNBUFFERED: "1"
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}

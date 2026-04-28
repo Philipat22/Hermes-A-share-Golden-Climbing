@@ -1,4 +1,4 @@
-# 环境变量（Token等敏感信息）
+# Environment (Tokens etc.)
 .env
 .env.local
 .env.production
@@ -10,8 +10,9 @@ __pycache__/
 .eggs/
 dist/
 build/
+*.egg
 
-# 数据缓存
+# Data cache
 data/cache/
 *.pkl
 *.parquet
@@ -25,24 +26,22 @@ poetry.lock
 *.swp
 *.swo
 
-# 测试文件（可选，可保留）
+# Debug & test files (root directory)
 test_*.py
 diagnose_*.py
-
-# 系统文件
-.DS_Store
-Thumbs.db
-
-# Debug/diagnostic scripts
-*.pyc
-.aider*
-backup_workspace.ps1
-check_*.py
 diag_*.py
-find_*.py
-fix_*.py
-optimize_*.py
+check_*.py
 scan_*.py
 status_check*.py
+optimize_prompts*.py
+fix_*.py
 tushare_cols.py
+find_*.py
 
+# Aider logs
+.aider*
+.aider
+
+# OS
+Thumbs.db
+.DS_Store

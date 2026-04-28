@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: |
+          pip install poetry==2.3.4
+
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction
+
+      - name: Lint with flake8
+        run: |
+          pip install flake8
+          flake8 src/ --max-line-length=120 --count --show-source --statistics
+
+      - name: Check import integrity
+        run: |
+          poetry run python -c "
+import sys
+errors = []
+# Try importing all core modules
+modules = [
+    'src.graph.state',
+    'src.tools.a_stock_api',
+    'src.utils.sector_map',
+    'src.utils.a_stock_filter',
+    'src.agents.technicals',
+    'src.agents.fundamentals',
+    'src.agents.sentiment',
+    'src.agents.growth_agent',
+    'src.agents.valuation',
+    'src.agents.news_sentiment',
+    'src.agents.risk_manager',
+    'src.agents.portfolio_manager',
+]
+for mod in modules:
+    try:
+        __import__(mod)
+        print(f'OK: {mod}')
+    except Exception as e:
+        errors.append(f'FAIL: {mod} -> {e}')
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+print('All imports OK')
+"
+
+      - name: Validate Python syntax
+        run: |
+          find src/ -name '*.py' -exec python -m py_compile {} \;
+          echo "All .py files compile OK"
+
+  # Run full analysis pipeline (requires secrets)
+  integration:
+    needs: validate
+    if: github.repository_owner == 'Philipat22' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pip install poetry==2.3.4
+
+      - name: Install dependencies
+        run: poetry install --no-interaction
+
+      - name: Set up .env
+        run: |
+          echo "TUSHARE_TOKEN=${{ secrets.TUSHARE_TOKEN }}" >> .env
+          echo "DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}" >> .env
+          echo "DEFAULT_MODEL=deepseek-chat" >> .env
+          echo "DEFAULT_PROVIDER=DeepSeek" >> .env
+
+      - name: Run quick test (1 stock, 3 agents)
+        run: |
+          poetry run python -c "
+import sys
+sys.path.insert(0, '.')
+from src.main_astock import run_astock_analysis
+result = run_astock_analysis(
+    tickers=['600519.SH'],
+    selected_analysts=['fundamentals_analyst', 'valuation_analyst', 'technical_analyst'],
+    model_name='deepseek-chat',
+    model_provider='DeepSeek',
+    show_reasoning=False,
+)
+signals = result.get('analyst_signals', {})
+assert len(signals) >= 2, f'Expected >=2 agents, got {len(signals)}'
+print('Integration test passed')
+"

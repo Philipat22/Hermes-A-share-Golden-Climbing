@@ -669,6 +669,14 @@ class NewsItem:
         self.published_date = published_date
 
 
+def get_stock_name_for_ticker(ticker: str) -> str:
+    """获取股票中文名称"""
+    info = get_stock_info(ticker)
+    if info and info.name:
+        return info.name
+    return ""
+
+
 def get_company_news(
     ticker: str,
     end_date: str,
@@ -679,63 +687,65 @@ def get_company_news(
 ) -> list[NewsItem]:
     """
     获取公司新闻（中文舆情）
-    使用 AKShare 财经新闻接口
+    使用 Tushare major_news + AKShare
 
     Args:
-        ticker: A股代码，如 "600519.SH" 或简称 "贵州茅台"
+        ticker: A股代码，如 "600519.SH"
         end_date: 截止日期
         limit: 返回数量
         api_key: 忽略，保留接口兼容性
     """
-    # 解析股票代码
     code, _ = parse_ts_code(ticker)
-    stock_name = ticker
+    stock_name = get_stock_name_for_ticker(ticker)
+    keywords = [code, stock_name] if stock_name else [code]
 
-    # 尝试从 Tushare 获取新闻
     news_list = []
-
-    # 方法1: 使用 Tushare 公告接口（如果有权限）
     pro = get_pro_api()
+
+    # 方法1: Tushare major_news (通用财经新闻 + 关键词过滤)
     if pro is not None:
         try:
-            # 获取近期新闻/公告
-            news_df = pro.news(
-                start_date=(datetime.strptime(end_date, "%Y-%m-%d") - timedelta(days=30)).strftime("%Y%m%d"),
-                end_date=end_date.replace("-", ""),
-                market="cns",
+            end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+            start_dt = end_dt - timedelta(days=30)
+            ndf = pro.major_news(
+                start_date=start_dt.strftime("%Y%m%d"),
+                end_date=end_dt.strftime("%Y%m%d"),
             )
-            if news_df is not None and not news_df.empty:
-                for _, row in news_df.head(limit).iterrows():
-                    # 简单情感判断（关键词法）
+            if ndf is not None and not ndf.empty:
+                ndf = ndf.sort_values("pub_time", ascending=False)
+                pattern = "|".join(k for k in keywords if k)
+                ndf = ndf[ndf["title"].str.contains(pattern, na=False)]
+                ndf = ndf.head(limit)
+                for _, row in ndf.iterrows():
                     title = str(row.get("title", ""))
-                    content = str(row.get("content", ""))[:200]
-                    sentiment = _simple_sentiment(title + content)
+                    sentiment = _simple_sentiment(title)
                     news_list.append(
                         NewsItem(
                             title=title,
                             url=str(row.get("url", "")),
-                            publisher=str(row.get("source", "未知")),
+                            publisher=str(row.get("src", "财经媒体")),
                             sentiment=sentiment,
-                            published_date=str(row.get("datetime", "")),
+                            published_date=str(row.get("pub_time", "")),
                         )
                     )
         except Exception:
             pass
 
-    # 方法2: 使用 AKShare 财经新闻
-    if len(news_list) < 5:
+    # 方法2: AKShare 东方财富个股新闻
+    if len(news_list) < 10:
         try:
             df = ak.stock_news_em(symbol=code)
             if df is not None and not df.empty:
                 for _, row in df.head(limit).iterrows():
                     title = str(row.get("新闻标题", row.get("title", "")))
-                    content = str(row.get("新闻内容", row.get("content", "")))[:200]
-                    sentiment = _simple_sentiment(title + content)
+                    if not title:
+                        continue
+                    sentiment = _simple_sentiment(title)
                     news_list.append(
                         NewsItem(
                             title=title,
                             url=str(row.get("链接", row.get("url", ""))),
-                            publisher=str(row.get("文章来源", "财经网")),
+                            publisher=str(row.get("文章来源", "东方财富")),
                             sentiment=sentiment,
                             published_date=str(row.get("发布时间", "")),
                         )
