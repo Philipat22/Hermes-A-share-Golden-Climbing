@@ -1,0 +1,5 @@
+# Aider configuration
+model: deepseek/deepseek-reasoner
+map-tokens: 2048
+auto-commits: false
+pretty: true
