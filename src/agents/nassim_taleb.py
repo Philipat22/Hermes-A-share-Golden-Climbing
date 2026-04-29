@@ -18,6 +18,7 @@ from src.tools.api import (
     prices_to_df,
     search_line_items,
 )
+from src.tools.a_stock_api import get_market_context
 from src.utils.llm import call_llm
 from src.utils.progress import progress
 from src.utils.api_key import get_api_key_from_state
@@ -138,6 +139,9 @@ def nassim_taleb_agent(state: AgentState, agent_id: str = "nassim_taleb_agent"):
         }
 
         progress.update_status(agent_id, ticker, "Generating Nassim Taleb analysis")
+        market_context = get_market_context(ticker, end_date)
+        analysis_data[ticker]["market_context"] = market_context
+
         taleb_output = generate_taleb_output(
             ticker=ticker,
             analysis_data=analysis_data[ticker],
@@ -730,11 +734,12 @@ def generate_taleb_output(
                 "- 10-29%: Clearly fragile or dangerous vol regime\n"
                 "\n"
                 "Use Taleb's vocabulary: antifragile, convexity, skin in the game, via negativa, barbell, turkey problem, Lindy effect.\n"
-                "Keep reasoning under 250 characters. Be specific about A-share market factors. Do not invent data. "
+                "Write 3-5 sentences of detailed analysis (200-300 characters total). Be specific about A-share market factors. Do not invent data. "
                 "IMPORTANT: You are analyzing a CHINESE A-SHARE stock. "
                 "A-shares differ from US stocks: (1) retail investors drive ~80% of volume, so sentiment swings are larger; "
                 "(2) government policy can shift sector dynamics overnight; (3) short-selling is very limited; "
                 "(4) earnings growth is less stable than US blue chips; (5) corporate governance varies widely. "
+                "Use market context data (sector, PE vs sector avg PE, return_1m/3m, volatility) to assess tail risks. "
                 "Factor these A-share realities into your analysis. Return JSON only.",
             ),
             (

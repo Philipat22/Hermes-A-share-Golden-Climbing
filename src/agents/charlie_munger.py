@@ -1,5 +1,6 @@
 from src.graph.state import AgentState, show_agent_reasoning
 from src.tools.api import get_financial_metrics, get_market_cap, search_line_items, get_insider_trades, get_company_news
+from src.tools.a_stock_api import get_market_context
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
@@ -120,6 +121,10 @@ def charlie_munger_agent(state: AgentState, agent_id: str = "charlie_munger_agen
             "news_sentiment": analyze_news_sentiment(company_news) if company_news else "No news data available"
         }
         
+        progress.update_status(agent_id, ticker, "Fetching market context")
+        market_context = get_market_context(ticker, end_date)
+        analysis_data[ticker]["market_context"] = market_context
+
         progress.update_status(agent_id, ticker, "Generating Charlie Munger analysis")
         munger_output = generate_munger_output(
             ticker=ticker, 
@@ -662,7 +667,7 @@ def calculate_munger_valuation(financial_line_items: list, market_cap: float) ->
     optimistic_value = normalized_fcf * 20    # 20x FCF = 5% yield
     
     # 5. Calculate margins of safety
-    margin_of_safety_vs_fair_value = (reasonable_value - market_cap) / market_cap
+    margin_of_safety_vs_fair_value = (reasonable_value - market_cap) / max(abs(market_cap), 1e-9)
     
     if margin_of_safety_vs_fair_value > 0.3:  # >30% upside
         score += 3
@@ -776,6 +781,17 @@ def make_munger_facts_bundle(analysis: dict[str, any]) -> dict[str, any]:
             "predictability": (pred.get("details") or "")[:120],
             "valuation": (val.get("details") or "")[:120],
         },
+        # 市场上下文
+        "market_context": {
+            "sector": analysis.get("market_context", {}).get("sector"),
+            "pe_ttm": analysis.get("market_context", {}).get("pe_ttm"),
+            "sector_avg_pe": analysis.get("market_context", {}).get("sector_avg_pe"),
+            "pb": analysis.get("market_context", {}).get("pb"),
+            "sector_avg_pb": analysis.get("market_context", {}).get("sector_avg_pb"),
+            "return_1m": analysis.get("market_context", {}).get("return_1m"),
+            "return_3m": analysis.get("market_context", {}).get("return_3m"),
+            "volatility": analysis.get("market_context", {}).get("volatility_60d"),
+        },
     }
 
 def compute_confidence(analysis: dict, signal: str) -> int:
@@ -833,7 +849,8 @@ def generate_munger_output(
          "(4) earnings growth is less stable than US blue chips; "
          "(5) corporate governance and transparency vary widely. "
          "Factor these A-share realities into your analysis. "
-         "Return JSON only. Keep reasoning under 250 characters. Be specific about A-share market factors."),
+         "Use market context (sector, PE vs sector_avg_pe, return_1m/3m) to support your reasoning. "
+         "Return JSON only. Write 3-5 sentences of detailed analysis (200-300 characters total). Be specific about A-share market factors."),
         ("human",
          "Ticker: {ticker}\n"
          "Facts:\n{facts}\n"

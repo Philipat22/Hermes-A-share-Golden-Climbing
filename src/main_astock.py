@@ -224,6 +224,44 @@ def run_astock_analysis(
     # 分析师节点映射
     analyst_nodes = get_analyst_nodes()
 
+    # ────────────────────────────────────────
+    # 安全包装器：单个Agent出错不终止全流程
+    # ────────────────────────────────────────
+    def safe_agent_wrapper(node_name: str, agent_func):
+        """Wrap an agent node with crash isolation."""
+        def wrapped(state: AgentState):
+            try:
+                return agent_func(state)
+            except Exception as e:
+                import traceback
+                error_msg = f"[{node_name}] 崩溃: {e}"
+                trace = traceback.format_exc()
+                print(f"\n⚠️  {error_msg}")
+                # 只打印前3行traceback避免刷屏
+                for line in trace.split('\n')[:4]:
+                    print(f"   {line}")
+                # 返回fallback信号：该Agent对所有ticker给中性0%   
+                tickers = state.get("data", {}).get("tickers", [])
+                fallback = {
+                    "signal": "neutral",
+                    "confidence": 0,
+                    "reasoning": f"分析异常: {e}",
+                }
+                signals = {}
+                for t in tickers:
+                    signals[t] = {**fallback, "ticker": t}
+                return {
+                    "messages": state.get("messages", []),
+                    "data": {
+                        **state.get("data", {}),
+                        "analyst_signals": {
+                            **state.get("data", {}).get("analyst_signals", {}),
+                            node_name: signals,
+                        },
+                    },
+                }
+        return wrapped
+
     # 构建 StateGraph workflow
     workflow = StateGraph(AgentState)
 
@@ -233,16 +271,17 @@ def run_astock_analysis(
 
     workflow.add_node("start", start_node)
 
-    # 添加选中的分析师
+    # 添加选中的分析师（安全包装）
     for key in analyst_names:
         if key in analyst_nodes:
             node_name, node_func = analyst_nodes[key]
-            workflow.add_node(node_name, node_func)
+            wrapped = safe_agent_wrapper(node_name, node_func)
+            workflow.add_node(node_name, wrapped)
             workflow.add_edge("start", node_name)
 
-    # 风控 + 组合管理
-    workflow.add_node("risk_management_agent", risk_management_agent)
-    workflow.add_node("portfolio_manager", portfolio_management_agent)
+    # 风控 + 组合管理（也加安全包装）
+    workflow.add_node("risk_management_agent", safe_agent_wrapper("risk_management_agent", risk_management_agent))
+    workflow.add_node("portfolio_manager", safe_agent_wrapper("portfolio_manager", portfolio_management_agent))
 
     for key in analyst_names:
         if key in analyst_nodes:
@@ -459,8 +498,18 @@ if __name__ == "__main__":
                 if total > 0:
                     verdict = "🟢 整体看多" if bullish > bearish else ("🔴 整体看空" if bearish > bullish else "🟡 中性")
                     print(f"  → {verdict} (多:{bullish:.0f} 空:{bearish:.0f} 中:{neutral:.0f})")
-            else:
-                print(f"\n{ticker}: ⚠️ 无分析信号")
+
+            # Agent对比信号卡 + 交易指令卡
+            try:
+                from src.utils.display import print_signal_card, print_trading_card
+                print()
+                print_signal_card(ticker, analyst_signals)
+                print()
+                print_trading_card(ticker, analyst_signals)
+            except Exception:
+                pass
+        else:
+            print(f"\n{ticker}: ⚠️ 无分析信号")
 
     except KeyboardInterrupt:
         print("\n\n⚠️ 用户中断")

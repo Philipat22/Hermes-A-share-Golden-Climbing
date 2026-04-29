@@ -7,6 +7,7 @@ from src.tools.api import (
     get_company_news,
     get_prices,
 )
+from src.tools.a_stock_api import get_market_context
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
@@ -135,6 +136,9 @@ def stanley_druckenmiller_agent(state: AgentState, agent_id: str = "stanley_druc
         }
 
         progress.update_status(agent_id, ticker, "Generating Stanley Druckenmiller analysis")
+        market_context = get_market_context(ticker, end_date)
+        analysis_data["market_context"] = market_context
+
         druck_output = generate_druckenmiller_output(
             ticker=ticker,
             analysis_data=analysis_data,
@@ -582,6 +586,8 @@ def generate_druckenmiller_output(
                 "confidence": float (0-100),
                 "reasoning": "string"
               }}
+              Use market context data (sector, PE vs sector avg PE, return_1m/3m, volatility) to gauge macro risk/reward.
+              Write 3-5 sentences of detailed analysis (200-300 characters total). Include specific data points.
               """,
             ),
         ]

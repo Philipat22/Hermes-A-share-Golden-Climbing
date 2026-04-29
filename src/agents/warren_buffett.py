@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 import json
 from typing_extensions import Literal
 from src.tools.api import get_financial_metrics, get_market_cap, search_line_items
+from src.tools.a_stock_api import get_market_context
 from src.utils.llm import call_llm
 from src.utils.progress import progress
 from src.utils.api_key import get_api_key_from_state
@@ -77,6 +78,9 @@ def warren_buffett_agent(state: AgentState, agent_id: str = "warren_buffett_agen
         progress.update_status(agent_id, ticker, "Analyzing management quality")
         mgmt_analysis = analyze_management_quality(financial_line_items)
 
+        progress.update_status(agent_id, ticker, "Fetching market context")
+        market_context = get_market_context(ticker, end_date)
+
         progress.update_status(agent_id, ticker, "Calculating intrinsic value")
         intrinsic_value_analysis = calculate_intrinsic_value(financial_line_items)
 
@@ -103,7 +107,7 @@ def warren_buffett_agent(state: AgentState, agent_id: str = "warren_buffett_agen
         margin_of_safety = None
         intrinsic_value = intrinsic_value_analysis["intrinsic_value"]
         if intrinsic_value and market_cap:
-            margin_of_safety = (intrinsic_value - market_cap) / market_cap
+            margin_of_safety = (intrinsic_value - market_cap) / max(abs(market_cap), 1e-9)
 
         # Combine all analysis results for LLM evaluation
         analysis_data[ticker] = {
@@ -125,6 +129,7 @@ def warren_buffett_agent(state: AgentState, agent_id: str = "warren_buffett_agen
         buffett_output = generate_buffett_output(
             ticker=ticker,
             analysis_data=analysis_data[ticker],
+            market_context=market_context,
             state=state,
             agent_id=agent_id,
         )
@@ -542,8 +547,11 @@ def calculate_intrinsic_value(financial_line_items: list) -> dict[str, any]:
         latest_earnings = historical_earnings[0]
         years = len(historical_earnings) - 1
 
-        if oldest_earnings > 0:
+        if oldest_earnings > 0 and latest_earnings > 0:
             historical_growth = ((latest_earnings / oldest_earnings) ** (1 / years)) - 1
+            # Guard against complex numbers from negative ratios
+            if isinstance(historical_growth, complex):
+                historical_growth = 0.03
             # Conservative adjustment - cap growth and apply haircut
             historical_growth = max(-0.05, min(historical_growth, 0.15))  # Cap between -5% and 15%
             conservative_growth = historical_growth * 0.7  # Apply 30% haircut for conservatism
@@ -748,6 +756,7 @@ def analyze_pricing_power(financial_line_items: list, metrics: list) -> dict[str
 def generate_buffett_output(
         ticker: str,
         analysis_data: dict[str, any],
+        market_context: dict,
         state: AgentState,
         agent_id: str = "warren_buffett_agent",
 ) -> WarrenBuffettSignal:
@@ -766,6 +775,16 @@ def generate_buffett_output(
         "intrinsic_value": analysis_data.get("intrinsic_value_analysis", {}).get("intrinsic_value"),
         "market_cap": analysis_data.get("market_cap"),
         "margin_of_safety": analysis_data.get("margin_of_safety"),
+        # 市场上下文
+        "sector": market_context.get("sector"),
+        "pe_ttm": market_context.get("pe_ttm"),
+        "sector_avg_pe": market_context.get("sector_avg_pe"),
+        "pb": market_context.get("pb"),
+        "sector_avg_pb": market_context.get("sector_avg_pb"),
+        "price_vs_peers": (market_context.get("pe_ttm", 0) or 0) / (market_context.get("sector_avg_pe", 1) or 1),
+        "return_1m": market_context.get("return_1m"),
+        "return_3m": market_context.get("return_3m"),
+        "volatility": market_context.get("volatility_60d"),
     }
 
     template = ChatPromptTemplate.from_messages(
@@ -783,9 +802,9 @@ def generate_buffett_output(
                 "- Long-term prospects\n"
                 "\n"
                 "Signal rules:\n"
-                "- Bullish: strong business AND margin_of_safety > 0.\n"
-                "- Bearish: poor business OR clearly overvalued.\n"
-                "- Neutral: good business but margin_of_safety <= 0, or mixed evidence.\n"
+                "- Bullish: strong business AND margin_of_safety > 0, OR strong business with PE well below sector average (price_vs_peers < 0.8).\n"
+                "- Bearish: poor business OR clearly overvalued (price_vs_peers > 1.3).\n"
+                "- Neutral: good business but too expensive, or mixed evidence.\n"
                 "\n"
                 "Confidence scale:\n"
                 "- 90-100%: Exceptional business within my circle, trading at attractive price\n"
@@ -794,7 +813,13 @@ def generate_buffett_output(
                 "- 30-49%: Outside my expertise or concerning fundamentals\n"
                 "- 10-29%: Poor business or significantly overvalued\n"
                 "\n"
-                "Keep reasoning under 250 characters. Be specific about A-share market factors. Do not invent data. "
+                "Use the market context:\n"
+                "- Compare PE vs sector_avg_pe to judge relative valuation\n"
+                "- price_vs_peers < 0.8 = undervalued vs sector; > 1.2 = overvalued\n"
+                "- return_1m/3m shows recent price momentum\n"
+                "- High volatility (>0.5) may indicate special situation or risk\n"
+                "\n"
+                "Write 3-5 sentences of detailed analysis (200-300 characters total). Be specific about A-share market factors. Do not invent data. "
                 "IMPORTANT: You are analyzing a CHINESE A-SHARE stock. "
                 "A-shares differ from US stocks: (1) retail investors drive ~80% of volume, so sentiment swings are larger; "
                 "(2) government policy can shift sector dynamics overnight; (3) short-selling is very limited; "

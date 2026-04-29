@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import json
 from typing_extensions import Literal
 from src.tools.api import get_financial_metrics, get_market_cap, search_line_items
+from src.tools.a_stock_api import get_market_context
 from src.utils.llm import call_llm
 from src.utils.progress import progress
 from src.utils.api_key import get_api_key_from_state
@@ -88,7 +89,7 @@ def rakesh_jhunjhunwala_agent(state: AgentState, agent_id: str = "rakesh_jhunjhu
 
         # Calculate margin of safety
         margin_of_safety = (
-            (intrinsic_value - market_cap) / market_cap if intrinsic_value and market_cap else None
+            (intrinsic_value - market_cap) / max(abs(market_cap), 1e-9) if intrinsic_value and market_cap else None
         )
 
         # Jhunjhunwala's decision rules (30% minimum margin of safety for conviction)
@@ -136,6 +137,9 @@ def rakesh_jhunjhunwala_agent(state: AgentState, agent_id: str = "rakesh_jhunjhu
 
         # ─── LLM: craft Jhunjhunwala‑style narrative ──────────────────────────────
         progress.update_status(agent_id, ticker, "Generating Jhunjhunwala analysis")
+        market_context = get_market_context(ticker, end_date)
+        analysis_data[ticker]["market_context"] = market_context
+
         jhunjhunwala_output = generate_jhunjhunwala_output(
             ticker=ticker,
             analysis_data=analysis_data[ticker],
@@ -691,6 +695,8 @@ def generate_jhunjhunwala_output(
                   "confidence": float between 0 and 100,
                   "reasoning": "string"
                 }}
+                Use market context data (sector, PE vs sector avg PE, return_1m/3m, volatility) to identify growth bets.
+                Write 3-5 sentences of detailed analysis (200-300 characters total). Include specific data points.
                 """,
             ),
         ]

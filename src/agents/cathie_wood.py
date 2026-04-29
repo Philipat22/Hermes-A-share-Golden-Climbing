@@ -1,5 +1,6 @@
 from src.graph.state import AgentState, show_agent_reasoning
 from src.tools.api import get_financial_metrics, get_market_cap, search_line_items
+from src.tools.a_stock_api import get_market_context
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
@@ -85,6 +86,9 @@ def cathie_wood_agent(state: AgentState, agent_id: str = "cathie_wood_agent"):
         analysis_data[ticker] = {"signal": signal, "score": total_score, "max_score": max_possible_score, "disruptive_analysis": disruptive_analysis, "innovation_analysis": innovation_analysis, "valuation_analysis": valuation_analysis}
 
         progress.update_status(agent_id, ticker, "Generating Cathie Wood analysis")
+        market_context = get_market_context(ticker, end_date)
+        analysis_data["market_context"] = market_context
+
         cw_output = generate_cathie_wood_output(
             ticker=ticker,
             analysis_data=analysis_data,
@@ -350,7 +354,7 @@ def analyze_cathie_wood_valuation(financial_line_items: list, market_cap: float)
     terminal_value = (fcf * (1 + growth_rate) ** projection_years * terminal_multiple) / ((1 + discount_rate) ** projection_years)
     intrinsic_value = present_value + terminal_value
 
-    margin_of_safety = (intrinsic_value - market_cap) / market_cap
+    margin_of_safety = (intrinsic_value - market_cap) / max(abs(market_cap), 1e-9)
 
     score = 0
     if margin_of_safety > 0.5:
@@ -400,8 +404,11 @@ def generate_cathie_wood_output(
             5. Addressing R&D investment and innovation pipeline that could drive future growth
             6. Using Cathie Wood's optimistic, future-focused, and conviction-driven voice
             
+            Use market context data (sector, PE vs sector avg PE, return_1m/3m, volatility) to assess growth potential.
+            
             For example, if bullish: "The company's AI-driven platform is transforming the $500B healthcare analytics market, with evidence of platform adoption accelerating from 40% to 65% YoY. Their R&D investments of 22% of revenue are creating a technological moat that positions them to capture a significant share of this expanding market. The current valuation doesn't reflect the exponential growth trajectory we expect as..."
             For example, if bearish: "While operating in the genomics space, the company lacks truly disruptive technology and is merely incrementally improving existing techniques. R&D spending at only 8% of revenue signals insufficient investment in breakthrough innovation. With revenue growth slowing from 45% to 20% YoY, there's limited evidence of the exponential adoption curve we look for in transformative companies..."
+            Write 3-5 sentences of detailed analysis (200-300 characters total). Include specific data points.
             """,
             ),
             (

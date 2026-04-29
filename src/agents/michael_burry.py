@@ -16,6 +16,7 @@ from src.tools.api import (
     get_market_cap,
     search_line_items,
 )
+from src.tools.a_stock_api import get_market_context
 from src.utils.llm import call_llm
 from src.utils.progress import progress
 from src.utils.api_key import get_api_key_from_state
@@ -128,6 +129,9 @@ def michael_burry_agent(state: AgentState, agent_id: str = "michael_burry_agent"
         }
 
         progress.update_status(agent_id, ticker, "Generating LLM output")
+        market_context = get_market_context(ticker, end_date)
+        analysis_data["market_context"] = market_context
+
         burry_output = _generate_burry_output(
             ticker=ticker,
             analysis_data=analysis_data,
@@ -360,6 +364,8 @@ def _generate_burry_output(
                   "confidence": float between 0 and 100,
                   "reasoning": "string"
                 }}
+                Use market context data (sector, PE vs sector avg PE, return_1m/3m, volatility) to find deep value opportunities.
+                Write 3-5 sentences of detailed analysis (200-300 characters total). Include specific data points.
                 """,
             ),
         ]

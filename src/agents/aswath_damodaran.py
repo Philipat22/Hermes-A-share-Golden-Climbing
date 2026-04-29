@@ -13,6 +13,7 @@ from src.tools.api import (
     get_market_cap,
     search_line_items,
 )
+from src.tools.a_stock_api import get_market_context
 from src.utils.api_key import get_api_key_from_state
 from src.utils.llm import call_llm
 from src.utils.progress import progress
@@ -89,7 +90,7 @@ def aswath_damodaran_agent(state: AgentState, agent_id: str = "aswath_damodaran_
 
         intrinsic_value = intrinsic_val_analysis["intrinsic_value"]
         margin_of_safety = (
-            (intrinsic_value - market_cap) / market_cap if intrinsic_value and market_cap else None
+            (intrinsic_value - market_cap) / max(abs(market_cap), 1e-9) if intrinsic_value and market_cap else None
         )
 
         # Decision rules (Damodaran tends to act with ~20-25 % MOS)
@@ -114,6 +115,9 @@ def aswath_damodaran_agent(state: AgentState, agent_id: str = "aswath_damodaran_
 
         # ─── LLM: craft Damodaran-style narrative ──────────────────────────────
         progress.update_status(agent_id, ticker, "Generating Damodaran analysis")
+        market_context = get_market_context(ticker, end_date)
+        analysis_data["market_context"] = market_context
+
         damodaran_output = generate_damodaran_output(
             ticker=ticker,
             analysis_data=analysis_data,
@@ -388,7 +392,7 @@ def generate_damodaran_output(
                   ◦ Connect that story to key numerical drivers: revenue growth, margins, reinvestment, risk
                   ◦ Conclude with value: your FCFF DCF estimate, margin of safety, and relative valuation sanity checks
                   ◦ Highlight major uncertainties and how they affect value
-                Return ONLY the JSON specified below.""",
+                Use market context data (sector, PE vs sector avg PE, return_1m/3m, volatility) to support your valuation. Write 3-5 sentences of detailed analysis (200-300 characters total). Include specific data points. Return ONLY the JSON specified below.""",
             ),
             (
                 "human",

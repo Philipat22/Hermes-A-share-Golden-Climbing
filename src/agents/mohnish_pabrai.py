@@ -1,5 +1,6 @@
 from src.graph.state import AgentState, show_agent_reasoning
 from src.tools.api import get_financial_metrics, get_market_cap, search_line_items
+from src.tools.a_stock_api import get_market_context
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
@@ -100,6 +101,9 @@ def mohnish_pabrai_agent(state: AgentState, agent_id: str = "mohnish_pabrai_agen
         }
 
         progress.update_status(agent_id, ticker, "Generating Pabrai analysis")
+        market_context = get_market_context(ticker, end_date)
+        analysis_data["market_context"] = market_context
+
         pabrai_output = generate_pabrai_output(
             ticker=ticker,
             analysis_data=analysis_data,
@@ -342,6 +346,8 @@ def generate_pabrai_output(
             "confidence": float (0-100),
             "reasoning": "string with Pabrai-style analysis focusing on downside protection, FCF yield, and doubling potential"
           }}
+          Use market context data (sector, PE vs sector avg PE, return_1m/3m, volatility) to find deep value cloning opportunities.
+          Write 3-5 sentences of detailed analysis (200-300 characters total). Include specific data points.
           """,
         ),
     ])

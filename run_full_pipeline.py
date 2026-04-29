@@ -115,6 +115,14 @@ for ticker in by_ticker:
         print(f"  {'─'*55}")
         print(f"  {verdict:>45s} (多{bullish:4.0f} 空{bearish:4.0f} 中{neutral:4.0f})")
     print()
+    
+    # Agent对比信号卡
+    try:
+        from src.utils.display import print_signal_card
+        print_signal_card(ticker, ana_signals)
+        print()
+    except Exception:
+        pass
 
 # 检查portfolio_manager
 pm = ana_signals.get("portfolio_manager", {})

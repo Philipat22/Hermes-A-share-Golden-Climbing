@@ -1330,6 +1330,167 @@ def _calc_date(end_date: str, years: int = 1) -> str:
 
 
 # ============================================================
+# 市场上下文（供 LLM 大师 prompt 使用）
+# ============================================================
+
+# 板块平均PE缓存
+_sector_pe_cache: dict[str, tuple[float, int]] = {}  # sector -> (avg_pe, count)
+_sector_cache_ts: float = 0.0  # 缓存时间戳
+
+
+def get_market_context(ticker: str, end_date: str) -> dict:
+    """
+    获取股票的完整市场上下文，供LLM大师Agent注入prompt facts使用。
+    返回：板块、行业、PE/PB、板块均值、价格趋势、波动率、融资余额等。
+    """
+    ctx = {
+        "ticker": ticker,
+        "sector": None,
+        "industry": None,
+        "name": None,
+        "pe_ttm": None,
+        "sector_avg_pe": None,
+        "pb": None,
+        "sector_avg_pb": None,
+        "latest_close": None,
+        "return_1m": None,
+        "return_3m": None,
+        "volatility_60d": None,
+        "market_cap": None,
+        "dividend_yield": None,
+        "margin_balance": None,
+        "north_position": None,  # 北向资金持股
+    }
+
+    pro = get_pro_api()
+    if pro is None:
+        return ctx
+
+    ts_code = normalize_ts_code(ticker)
+    trade_date = end_date.replace("-", "")
+
+    # 1. 获取行业信息
+    try:
+        info = pro.stock_basic(ts_code=ts_code)
+        if info is not None and not info.empty:
+            r = info.iloc[0]
+            ctx["industry"] = str(r.get("industry", ""))
+            ctx["name"] = str(r.get("name", ""))
+            # 通过行业关键词反查板块
+            for sector_name, industry_list in SECTOR_INDUSTRY_MAP.items():
+                if ctx["industry"] in industry_list:
+                    ctx["sector"] = sector_name
+                    break
+            if ctx["sector"] is None and ctx["industry"]:
+                ctx["sector"] = ctx["industry"].split("＼")[0] if "＼" in ctx["industry"] else ctx["industry"]
+    except Exception:
+        pass
+
+    # 2. PE/PB 和最新价
+    try:
+        dly = pro.daily_basic(ts_code=ts_code, trade_date=trade_date)
+        if dly is None or dly.empty:
+            dly = pro.daily_basic(ts_code=ts_code)
+        if dly is not None and not dly.empty:
+            r = dly.iloc[0]
+            ctx["pe_ttm"] = _safe_float(r.get("pe_ttm"), None)
+            ctx["pb"] = _safe_float(r.get("pb"), None)
+            ctx["dividend_yield"] = _safe_float(r.get("dv_ratio"), None)
+            ctx["latest_close"] = _safe_float(r.get("close"), None)
+    except Exception:
+        pass
+
+    # 3. 价格趋势 + 波动率
+    try:
+        df = pro.daily(ts_code=ts_code, start_date=_calc_date(end_date, years=1), end_date=trade_date)
+        if df is not None and not df.empty:
+            df = df.sort_values("trade_date").reset_index(drop=True)
+            closes = df["close"].values.astype(float)
+            if len(closes) >= 60:
+                returns_60d = np.diff(np.log(closes[-61:]))
+                ctx["volatility_60d"] = float(np.std(returns_60d) * np.sqrt(252))
+                ctx["latest_close"] = float(closes[-1])
+            if len(closes) >= 21:
+                ctx["return_1m"] = float(closes[-1] / closes[-21] - 1)
+            if len(closes) >= 63:
+                ctx["return_3m"] = float(closes[-1] / closes[-63] - 1)
+    except Exception:
+        pass
+
+    # 4. 市值
+    try:
+        mc = get_market_cap(ticker, end_date)
+        if mc is not None:
+            ctx["market_cap"] = mc
+    except Exception:
+        pass
+
+    # 5. 板块平均PE（有缓存）
+    try:
+        global _sector_pe_cache, _sector_cache_ts
+        if ctx["industry"] and ctx["industry"] not in _sector_pe_cache:
+            # 查找同行业的其他股票
+            all_stocks = pro.stock_basic()
+            if all_stocks is not None and not all_stocks.empty:
+                industry_stocks = all_stocks[all_stocks["industry"] == ctx["industry"]]
+                tickers_in_industry = industry_stocks["ts_code"].tolist()
+                # 批量获取PE
+                total_pe = 0.0
+                pe_count = 0
+                total_pb = 0.0
+                pb_count = 0
+                for batch_start in range(0, min(len(tickers_in_industry), 50), 5):
+                    batch = tickers_in_industry[batch_start:batch_start + 5]
+                    for t in batch:
+                        try:
+                            bd = pro.daily_basic(ts_code=t)
+                            if bd is not None and not bd.empty:
+                                pe = _safe_float(bd.iloc[0].get("pe_ttm"), None)
+                                pb = _safe_float(bd.iloc[0].get("pb"), None)
+                                if pe is not None and pe > 0 and pe < 200:
+                                    total_pe += pe
+                                    pe_count += 1
+                                if pb is not None and pb > 0 and pb < 50:
+                                    total_pb += pb
+                                    pb_count += 1
+                        except Exception:
+                            pass
+                avg_pe = total_pe / pe_count if pe_count > 0 else None
+                avg_pb = total_pb / pb_count if pb_count > 0 else None
+                _sector_pe_cache[ctx["industry"]] = (avg_pe, avg_pb, pe_count)
+        
+        if ctx["industry"] in _sector_pe_cache:
+            avg_pe, avg_pb, cnt = _sector_pe_cache[ctx["industry"]]
+            ctx["sector_avg_pe"] = avg_pe
+            ctx["sector_avg_pb"] = avg_pb
+    except Exception:
+        pass
+
+    # 6. 融资融券余额
+    try:
+        mt = pro.margin(ts_code=ts_code, start_date=_calc_date(end_date, months=6), end_date=trade_date)
+        if mt is not None and not mt.empty:
+            ctx["margin_balance"] = _safe_float(mt.iloc[-1].get("rzmre"), None)  # 融资余额
+    except Exception:
+        pass
+
+    # 7. 北向资金（取最近一日净流入）
+    try:
+        nm_df = get_north_money(start_date=_calc_date(end_date, years=1), end_date=trade_date)
+        if nm_df is not None and isinstance(nm_df, pd.DataFrame) and not nm_df.empty:
+            recent_nm = nm_df.iloc[0]
+            ctx["north_money"] = _safe_float(recent_nm.get("north_money"), None)
+            if ctx["north_money"] is not None:
+                ctx["north_money"] = round(ctx["north_money"] / 1e8, 2)  # 转为亿元
+    except Exception:
+        pass
+
+    # 清洗None值不输出的字段
+    clean_ctx = {k: v for k, v in ctx.items() if v is not None}
+    return clean_ctx
+
+
+# ============================================================
 # 快速测试
 # ============================================================
 if __name__ == "__main__":

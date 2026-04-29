@@ -154,11 +154,11 @@ def valuation_analyst_agent(state: AgentState, agent_id: str = "valuation_analys
             continue
 
         for v in method_values.values():
-            v["gap"] = (v["value"] - market_cap) / market_cap if v["value"] > 0 else None
+            v["gap"] = (v["value"] - market_cap) / max(abs(market_cap), 1e-9) if v["value"] > 0 else None
 
         weighted_gap = sum(
             v["weight"] * v["gap"] for v in method_values.values() if v["gap"] is not None
-        ) / total_weight
+        ) / max(abs(sum(v["weight"] for v in method_values.values() if v["gap"] is not None)), 1e-9)
 
         signal = "bullish" if weighted_gap > 0.15 else "bearish" if weighted_gap < -0.15 else "neutral"
         confidence = round(min(abs(weighted_gap) / 0.30 * 100, 100))

@@ -1,5 +1,6 @@
 from src.graph.state import AgentState, show_agent_reasoning
 from src.tools.api import get_financial_metrics, get_market_cap, search_line_items
+from src.tools.a_stock_api import get_market_context
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
@@ -68,6 +69,9 @@ def ben_graham_agent(state: AgentState, agent_id: str = "ben_graham_agent"):
         analysis_data[ticker] = {"signal": signal, "score": total_score, "max_score": max_possible_score, "earnings_analysis": earnings_analysis, "strength_analysis": strength_analysis, "valuation_analysis": valuation_analysis}
 
         progress.update_status(agent_id, ticker, "Generating Ben Graham analysis")
+        market_context = get_market_context(ticker, end_date)
+        analysis_data["market_context"] = market_context
+
         graham_output = generate_graham_output(
             ticker=ticker,
             analysis_data=analysis_data,
@@ -313,10 +317,13 @@ def generate_graham_output(
             5. Comparing current metrics to Graham's specific thresholds (e.g., "Current ratio of 2.5 exceeds Graham's minimum of 2.0")
             6. Using Benjamin Graham's conservative, analytical voice and style in your explanation
             
+            Use market context data (sector, PE vs sector avg PE, PB vs sector avg PB, return_1m/3m, volatility) to support your analysis.
+            
             For example, if bullish: "The stock trades at a 35% discount to net current asset value, providing an ample margin of safety. The current ratio of 2.5 and debt-to-equity of 0.3 indicate strong financial position..."
             For example, if bearish: "Despite consistent earnings, the current price of $50 exceeds our calculated Graham Number of $35, offering no margin of safety. Additionally, the current ratio of only 1.2 falls below Graham's preferred 2.0 threshold..."
                         
             Return a rational recommendation: bullish, bearish, or neutral, with a confidence level (0-100) and thorough reasoning.
+            Write 3-5 sentences of detailed analysis (200-300 characters total). Include specific data points.
             """,
             ),
             (
