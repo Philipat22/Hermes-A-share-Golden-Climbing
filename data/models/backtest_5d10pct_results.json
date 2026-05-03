@@ -6,11 +6,11 @@
     "slippage": 0.001,
     "round_trip": 0.0031
   },
-  "total_trades": 197,
-  "win_rate": 0.4873096446700508,
-  "avg_net_return": 0.011110930065494802,
-  "profit_factor": 1.1772254879011572,
-  "full_cum_return": -0.2835138581289133,
-  "full_sharpe": 1.2325186738018232,
-  "full_max_dd": -0.8946945006889517
+  "total_trades": 4438,
+  "win_rate": 0.4121225777377197,
+  "avg_net_return": -0.007015647362016267,
+  "profit_factor": 0.840253969567887,
+  "full_cum_return": -0.381820010576401,
+  "full_sharpe": -0.10172182370402982,
+  "full_max_dd": -0.524112626337536
 }

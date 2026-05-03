@@ -138,6 +138,8 @@ for wi, (tr_s, tr_e, te_s, te_e, wname) in enumerate(WF_WINDOWS):
     X_vl_wide = pdf.loc[vl_mask, TOP_FEATURES].values
     X_vl = np.where(np.isinf(X_vl_wide), np.nan, X_vl_wide)
     y_vl = ((pdf.loc[vl_mask, fwd_col].fillna(0) >= LABEL_THRESHOLD).astype(int)).values
+    keep_vl = ~np.isnan(X_vl).all(axis=1) & ~np.isnan(y_vl)
+    X_vl, y_vl = X_vl[keep_vl], y_vl[keep_vl]
 
     lgb_tr = lgb.Dataset(X_tr, y_tr)
     lgb_vl = lgb.Dataset(X_vl, y_vl, reference=lgb_tr)
@@ -149,16 +151,23 @@ for wi, (tr_s, tr_e, te_s, te_e, wname) in enumerate(WF_WINDOWS):
     # ── Find best threshold on validation ──
     vl_scores = w_model.predict(X_vl)
     best_th, best_excess_vl = 0.10, -999.0
+    min_pick_ratio = 0.05
     for th in [x / 100 for x in range(10, 90, 5)]:
         picks = vl_scores >= th
-        if picks.sum() < 5:
+        pick_ratio = picks.sum() / len(vl_scores)
+        if picks.sum() < 5 or pick_ratio < min_pick_ratio:
             continue
-        avg_pick_ret = np.nanmean(pdf.loc[vl_mask, fwd_col].values[keep][picks])
-        avg_mkt_ret = np.nanmean(pdf.loc[vl_mask, fwd_col].values[keep])
+        vl_fwd_vals = pdf.loc[vl_mask, fwd_col].values[keep_vl]
+        avg_pick_ret = np.nanmean(vl_fwd_vals[picks])
+        avg_mkt_ret = np.nanmean(vl_fwd_vals)
         excess = avg_pick_ret - avg_mkt_ret
         if excess > best_excess_vl:
             best_excess_vl = excess
             best_th = th
+    # Fallback: if no threshold selected, use 0.30
+    if best_th == 0.10 and best_excess_vl == -999.0:
+        best_th = 0.30
+        best_excess_vl = 0
     print(f"    Best threshold: {best_th:.2f} (val excess: {best_excess_vl:.2%})")
 
     # ── Trade simulation ──
@@ -204,7 +213,7 @@ for wi, (tr_s, tr_e, te_s, te_e, wname) in enumerate(WF_WINDOWS):
             window_trades.append({
                 'window': wname,
                 'symbol': sym,
-                'entry_date': str(pos['entry_date'].date()),
+                'entry_date': str(pd.Timestamp(pos['entry_date']).date()),
                 'exit_date': str(d.date()),
                 'entry_price': pos['entry_price'],
                 'exit_price': sell_price,
