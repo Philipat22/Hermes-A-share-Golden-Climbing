@@ -56,9 +56,10 @@ class StrategyParams:
     bear_regime_cash_pct: float = 0.50  # BEAR 市保留现金比例
 
     # 全局
-    max_positions: int = 8              # 最大持仓数
+    max_positions: int = 4              # 最大持仓数 (保守)
     min_price: float = 3.0              # 最低股价过滤
     max_price: float = 200.0            # 最高股价过滤
+    min_hold_days: int = 5              # 最低持仓天数 (避免日内翻转)
 
 
 DEFAULT_PARAMS = StrategyParams()
@@ -230,11 +231,11 @@ def _compute_macd_np(
     ema_slow = _ema_np(close, slow)
 
     macd_line = ema_fast - ema_slow
-    macd_signal = _ema_np(macd_line[slow-1:], signal)
-    # Pad signal to match length
-    macd_signal_full = np.full(n, np.nan)
-    macd_signal_full[slow + signal - 2:] = macd_signal
-    macd_signal = macd_signal_full
+    macd_signal_raw = _ema_np(macd_line[slow-1:], signal)
+    # Skip the first (signal-1) NaNs from signal EMA
+    macd_signal_valid = macd_signal_raw[signal-1:]
+    macd_signal = np.full(n, np.nan)
+    macd_signal[slow + signal - 2:] = macd_signal_valid
 
     macd_hist = macd_line - macd_signal
 
@@ -442,55 +443,52 @@ class MainSurgeStrategy:
     # ════════════════════════════════════════════════════
 
     def _entry_signal(self, date: str, symbol: str) -> Optional[Signal]:
-        """检测入场信号
-
-        Returns: Signal if entry triggered, None otherwise
-        """
+        """检测入场信号 — 需历史形态确认"""
         p = self.params
-        # 需要历史数据做形态识别 — 往前取 120 天
         row = self._get_row(date, symbol)
         if row is None:
             return None
 
         close = row['close']
 
-        # ── MACD 确认 ──
+        # ── MACD 金叉确认: 今日 hist > 0 且昨日 <= 0 ──
         if p.macd_confirm:
             macd_hist = row.get('macd_hist', 0)
             if pd.isna(macd_hist) or macd_hist <= 0:
-                return None  # 未确认
-
-        # ── 布林带确认 ──
-        if p.bb_squeeze_confirm:
-            bb_bw = row.get('bb_bandwidth', 0)
-            if not pd.isna(bb_bw) and bb_bw > 0.20:
-                return None  # 带宽太宽，未收窄
+                return None
+            # 要求金叉（今日转正）
+            prev_row = self._get_prev_row(date, symbol)
+            if prev_row is not None:
+                prev_hist = prev_row.get('macd_hist', 0)
+                if not pd.isna(prev_hist) and prev_hist > 0:
+                    return None  # 不是金叉，只是持续为正
 
         score = 0.0
         reasons = []
 
-        # ── 信号1: 平台突破 ──
+        # ── 信号1: 平台突破 (需确认横盘历史) ──
         if self._detect_platform_breakout(date, symbol, close):
-            score += 0.30
+            score += 0.40
             reasons.append("platform_breakout")
 
-        # ── 信号2: N型突破 ──
+        # ── 信号2: N型突破 (需识别三波走势) ──
         if self._detect_n_pattern(date, symbol, close):
-            score += 0.25
+            score += 0.35
             reasons.append("n_pattern")
 
-        # ── 信号3: VCP 收缩突破 ──
+        # ── 信号3: VCP 收缩突破 (需多期波动率递减) ──
         if self._detect_vcp(date, symbol, close):
-            score += 0.25
+            score += 0.35
             reasons.append("vcp")
 
         # ── 信号4: 板块共振 ──
         sector_score = self._sector_resonance(date, symbol)
         if sector_score > 0:
-            score += sector_score * 0.20
-            reasons.append(f"sector_resonance({sector_score:.1f})")
+            score += sector_score * 0.15
+            reasons.append(f"sector({sector_score:.1f})")
 
-        if score >= 0.25:  # 至少一个强信号或多个弱信号
+        # 需要至少一个信号 AND 不是在已有持仓的情况下重复信号
+        if score >= 0.30 and (score >= 0.60 or len(reasons) >= 2):
             return Signal(
                 symbol=symbol,
                 action='BUY',
@@ -500,67 +498,147 @@ class MainSurgeStrategy:
 
         return None
 
+    def _get_prev_row(self, date: str, symbol: str, offset: int = 1) -> Optional[pd.Series]:
+        """获取前 N 天的指标数据"""
+        try:
+            dt = pd.to_datetime(date)
+            # 在 all_dates 中找前一个交易日
+            idx = self.all_dates.index(date) if date in self.all_dates else -1
+            if idx > offset - 1:
+                prev_date = self.all_dates[idx - offset]
+                return self._indicator_index.get((prev_date, symbol))
+        except:
+            pass
+        return None
+
     def _detect_platform_breakout(self, date: str, symbol: str, current_close: float) -> bool:
-        """检测平台突破 — 近期横盘后放量突破"""
+        """检测平台突破 — 横盘整理后放量突破
+
+        条件:
+        1. 过去 platform_min_days 日内价格振幅 < platform_max_amplitude (横盘)
+        2. 今日收盘突破平台高点
+        3. 成交量放大 > breakout_vol_ratio
+        """
         p = self.params
         row = self._get_row(date, symbol)
         if row is None:
             return False
 
-        # 简单实现：检查 BB 带宽是否收窄 + 成交量放大 + 价格突破 BB 上轨
         bb_pct_b = row.get('bb_pct_b', 0)
-        bb_bw = row.get('bb_bandwidth', 1)
         vol_ratio = row.get('vol_ratio', 0)
-
-        if pd.isna(bb_pct_b) or pd.isna(bb_bw) or pd.isna(vol_ratio):
+        if pd.isna(bb_pct_b) or pd.isna(vol_ratio):
             return False
 
-        # 突破上轨或接近上轨
-        if bb_pct_b < 0.8:
+        # 今日必须接近/突破布林上轨
+        if bb_pct_b < 0.75:
             return False
 
         # 成交量确认
         if vol_ratio < p.breakout_vol_ratio:
             return False
 
+        # 检查过去 platform_min_days 是否横盘
+        # 方法：检查 BB 带宽在过去 N 天是否持续收窄
+        narrow_count = 0
+        for offset in range(1, p.platform_min_days + 1):
+            prev = self._get_prev_row(date, symbol, offset)
+            if prev is not None:
+                bw = prev.get('bb_bandwidth', 1)
+                if not pd.isna(bw) and bw < 0.20:
+                    narrow_count += 1
+
+        # 至少有一半天数带宽收窄
+        if narrow_count < p.platform_min_days // 2:
+            return False
+
         return True
 
     def _detect_n_pattern(self, date: str, symbol: str, current_close: float) -> bool:
-        """检测 N 型反转 — 涨→回调→再涨"""
-        p = self.params
+        """检测 N 型反转 — 涨→回调→再创新高
 
-        # 简化实现: 近20日有 >15% 涨幅 + 之后回调 <4% + 现在创新高
-        # 通过逐日查找历史数据
+        条件:
+        1. 20日前的价格比现在低 > n_first_leg_min (第一波涨)
+        2. 期间有至少一次 5% 以上的回调
+        3. 当前创 20 日新高
+        """
+        p = self.params
         row = self._get_row(date, symbol)
         if row is None:
             return False
 
-        # 检查最近是否创新高
-        ma50 = row.get('ma50', 0)
-        if pd.isna(ma50) or current_close < ma50:
+        # 当前必须创新高
+        ma5 = row.get('ma5', 0)
+        if pd.isna(ma5) or current_close < ma5 * 1.01:
             return False
 
-        # 检查 MACD 金叉或柱状图增大
-        macd_hist = row.get('macd_hist', 0)
-        if pd.isna(macd_hist):
+        # 检查 20 日前价格（第一波起点）
+        prev20 = self._get_prev_row(date, symbol, 20)
+        if prev20 is None:
+            return False
+        close_20d_ago = prev20.get('close', 0)
+        if pd.isna(close_20d_ago) or close_20d_ago <= 0:
             return False
 
-        return macd_hist > 0
+        first_leg_ret = current_close / close_20d_ago - 1
+        if first_leg_ret < p.n_first_leg_min:
+            return False
+
+        # 检查期间是否有明显回调（从期间高点回落 > 5%）
+        max_close = current_close
+        had_pullback = False
+        for offset in range(1, 20):
+            prev = self._get_prev_row(date, symbol, offset)
+            if prev is not None:
+                c = prev.get('close', 0)
+                if not pd.isna(c) and c > 0:
+                    if c > max_close:
+                        max_close = c
+                    # 检查是否从局部高点回调超过 5%
+                    if max_close > 0 and (max_close - c) / max_close > 0.05:
+                        had_pullback = True
+
+        return had_pullback and first_leg_ret >= p.n_first_leg_min
 
     def _detect_vcp(self, date: str, symbol: str, current_close: float) -> bool:
-        """检测 VCP 波动收缩 — 波动率逐波递减"""
+        """检测 VCP 波动收缩 — 波动率逐波递减后放量突破
+
+        条件:
+        1. 当前 BB 带宽 < 0.15 (收缩到位)
+        2. 过去 60 天 BB 带宽总体递减趋势
+        3. %B 在 0.5 以上（价格偏强）
+        """
+        p = self.params
         row = self._get_row(date, symbol)
         if row is None:
             return False
 
         bb_bw = row.get('bb_bandwidth', 1)
         bb_pct_b = row.get('bb_pct_b', 0)
-
         if pd.isna(bb_bw) or pd.isna(bb_pct_b):
             return False
 
-        # BB 带宽 < 15% 表示收缩 + 价格在带内偏上
-        return bb_bw < 0.15 and bb_pct_b > 0.5
+        # 当前必须收缩
+        if bb_bw > 0.15:
+            return False
+
+        # 价格不能太弱
+        if bb_pct_b < 0.5:
+            return False
+
+        # 检查波动率递减趋势：30天前带宽 > 15天前带宽 > 当前带宽
+        bw_30 = self._get_prev_row(date, symbol, 30)
+        bw_15 = self._get_prev_row(date, symbol, 15)
+        bw_30_val = bw_30.get('bb_bandwidth', 0) if bw_30 is not None else 0
+        bw_15_val = bw_15.get('bb_bandwidth', 0) if bw_15 is not None else 0
+
+        if pd.isna(bw_30_val) or pd.isna(bw_15_val):
+            return False
+
+        # 波动率递减
+        if not (bw_30_val > bw_15_val > bb_bw):
+            return False
+
+        return True
 
     def _sector_resonance(self, date: str, symbol: str) -> float:
         """板块共振得分 — 同板块其他股票是否也触发信号"""
@@ -613,7 +691,14 @@ class MainSurgeStrategy:
 
         atr = row.get('atr_14', 0)
 
-        # ── 硬止损 ──
+        # 计算持仓天数
+        try:
+            days_held = (pd.to_datetime(date) - pd.to_datetime(pos.entry_date)).days
+        except:
+            days_held = 999
+        in_min_hold = days_held < p.min_hold_days
+
+        # ── 硬止损 (任何时间触发) ──
         if close <= pos.stop_loss_price:
             return Signal(pos.symbol, 'SELL', f'hard_stop({close:.2f}<={pos.stop_loss_price:.2f})')
 
@@ -621,39 +706,32 @@ class MainSurgeStrategy:
         if close > pos.highest_close:
             pos.highest_close = close
 
-        # ── 移动止损 ──
-        if not pos.trailing_active:
-            profit_pct = close / pos.entry_price - 1
-            if profit_pct >= p.trailing_start_pct:
-                pos.trailing_active = True
-                pos.trailing_stop_price = pos.highest_close * (1 - p.trailing_atr_mult * atr / close) if atr > 0 else pos.highest_close * 0.95
-        else:
-            # 更新移动止损价（只升不降）
-            new_stop = pos.highest_close * (1 - p.trailing_atr_mult * atr / close) if atr > 0 and close > 0 else pos.highest_close * 0.95
-            if new_stop > pos.trailing_stop_price:
-                pos.trailing_stop_price = new_stop
+        # ── 移动止损 (仅在最低持有期后激活) ──
+        if not in_min_hold:
+            if not pos.trailing_active:
+                profit_pct = close / pos.entry_price - 1
+                if profit_pct >= p.trailing_start_pct:
+                    pos.trailing_active = True
+                    pos.trailing_stop_price = pos.highest_close * (1 - p.trailing_atr_mult * atr / close) if atr > 0 else pos.highest_close * 0.95
+            else:
+                new_stop = pos.highest_close * (1 - p.trailing_atr_mult * atr / close) if atr > 0 and close > 0 else pos.highest_close * 0.95
+                if new_stop > pos.trailing_stop_price:
+                    pos.trailing_stop_price = new_stop
+                if close <= pos.trailing_stop_price:
+                    return Signal(pos.symbol, 'SELL', f'trailing_stop({close:.2f}<={pos.trailing_stop_price:.2f})')
 
-            if close <= pos.trailing_stop_price:
-                return Signal(pos.symbol, 'SELL', f'trailing_stop({close:.2f}<={pos.trailing_stop_price:.2f})')
-
-        # ── 时间止损 ──
-        try:
-            entry_dt = pd.to_datetime(pos.entry_date)
-            cur_dt = pd.to_datetime(date)
-            days_held = (cur_dt - entry_dt).days
-            # 交易日约等于自然日 * 0.7
-            trading_days = days_held * 0.7
-            if trading_days >= p.time_stop_days:
+        # ── 时间止损 (仅在最低持有期后激活) ──
+        if not in_min_hold:
+            if days_held >= p.time_stop_days:
                 profit_pct = (close / pos.entry_price - 1)
-                if profit_pct < 0.02:  # 20天还亏钱/微利就退出
-                    return Signal(pos.symbol, 'SELL', f'time_stop({trading_days:.0f}d, {profit_pct:.1%})')
-        except:
-            pass
+                if profit_pct < 0.02:
+                    return Signal(pos.symbol, 'SELL', f'time_stop({days_held}d, {profit_pct:.1%})')
 
-        # ── 趋势反转 ──
-        passed, reason = self._trend_filter(date, pos.symbol)
-        if not passed:
-            return Signal(pos.symbol, 'SELL', f'trend_break({reason})')
+        # ── 趋势反转 (仅在最低持有期后激活) ──
+        if not in_min_hold:
+            passed, reason = self._trend_filter(date, pos.symbol)
+            if not passed:
+                return Signal(pos.symbol, 'SELL', f'trend_break({reason})')
 
         return None  # 持有
 
@@ -677,13 +755,11 @@ class MainSurgeStrategy:
         entries: list[Signal] = []
         exits: list[Signal] = []
 
-        # ── 先检查出场 ──
-        for sym in list(self.positions.keys()):
-            pos = self.positions[sym]
+        # ── 先检查出场 (不删除持仓，由调用方处理) ──
+        for sym, pos in self.positions.items():
             exit_sig = self._exit_check(date, pos)
             if exit_sig:
                 exits.append(exit_sig)
-                del self.positions[sym]
 
         # ── 入场 ──
         # BEAR 市限制入场
