@@ -58,7 +58,6 @@ from src.agents.aswath_damodaran import aswath_damodaran_agent
 from src.agents.rakesh_jhunjhunwala import rakesh_jhunjhunwala_agent
 from src.agents.mohnish_pabrai import mohnish_pabrai_agent
 from src.agents.news_sentiment import news_sentiment_agent
-from src.agents.bill_ackman import bill_ackman_agent
 
 load_dotenv()
 

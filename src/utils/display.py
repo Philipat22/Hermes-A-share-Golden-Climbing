@@ -563,7 +563,9 @@ def generate_trading_card(ticker: str, analyst_signals: dict) -> str:
         "mohnish_pabrai_agent", "michael_burry_agent",
     ]
     for k in all_signals:
-        reason = all_signals[k].get("reasoning", "") or ""
+        raw = all_signals[k].get("reasoning", "") or ""
+        # reasoning可能是dict（旧的格式兼容）, 也可能是str
+        reason = str(raw) if not isinstance(raw, str) else raw
         sig = all_signals[k].get("signal", "")
         conf = all_signals[k].get("confidence", 0) or 0
 
@@ -582,7 +584,8 @@ def generate_trading_card(ticker: str, analyst_signals: dict) -> str:
     max_position = None
     for k, sig in all_signals.items():
         if "risk" in k.lower() or "management" in k.lower():
-            vol_text = sig.get("reasoning", "") or ""
+            vol_raw = sig.get("reasoning", "") or ""
+            vol_text = str(vol_raw) if not isinstance(vol_raw, str) else vol_raw
             vol_nums = re.findall(r'(?:波动率|volatility|vol|波动)[^，。]*?(\d+(?:\.\d+)?)%', vol_text, re.IGNORECASE)
             if vol_nums:
                 volatility = float(vol_nums[0])

@@ -1,0 +1,1049 @@
+﻿#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+surge/engine.py 鈥?褰㈡€佽瘑鍒瘎鍒嗗紩鎿?
+
+浜斾綅涓€浣撹瘎鍒嗘満鍒讹細浠锋牸褰㈡€?+ 鎴愪氦閲忕粨鏋?+ 鏉垮潡鑱斿姩 + 鍔犻€熷害 + 浼俊鍙疯繃婊?
+5绉嶅舰鎬侊細N瀛楃獊鐮?| 骞冲彴绐佺牬 | VCP | V褰㈠弽杞?| W搴?
+璇勫垎鑼冨洿锛?-100锛堝綊涓€鍖栵級
+绛夌骇锛? 55 涓嶅弬涓?| 55-79 杞讳粨 | 80+ 寮轰俊鍙?
+
+鑷垜杩涘寲锛氭墍鏈夊弬鏁板彲琚?feedback.py 鍔ㄦ€佽皟鏁?
+"""
+from __future__ import annotations
+import math, json, os, logging
+from datetime import datetime, timedelta
+from typing import Any, Optional
+import pandas as pd
+import numpy as np
+
+logger = logging.getLogger(__name__)
+
+# 鈹€鈹€ 榛樿鍙傛暟锛堝彲琚?feedback.py 璋冩暣锛夆攢鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+DEFAULT_PARAMS = {
+    # 骞冲彴绐佺牬
+    "platform_min_days": 15,
+    "platform_max_amplitude": 0.25,
+    "breakout_volume_ratio": 1.5,
+
+    # N瀛楃獊鐮?
+    "n_first_leg_min_return": 0.15,
+    "n_pullback_max": 0.5,
+    "n_second_leg_volume_ratio": 0.7,
+    "n_second_leg_min_return": 0.05,
+
+    # VCP 娉㈠姩鐜囨敹缂?
+    "vcp_volatility_ratio": 0.7,
+    "vcp_short_window": 10,
+    "vcp_long_window": 30,
+
+    # 鍔犻€熷害
+    "accel_window": 5,
+    "accel_threshold": 0.05,
+
+    # 鎴愪氦閲?
+    "volume_ma_window": 20,
+    "high_vol_ratio": 1.5,
+    "low_vol_ratio": 0.7,
+
+    # 璇勫垎鏉冮噸
+    "w_price_pattern": 0.35,
+    "w_volume": 0.25,
+    "w_sector": 0.25,
+    "w_acceleration": 0.15,
+
+    # 闃堝€?
+    "strong_signal": 80,
+    "weak_signal": 55,
+    "sector_min_peers": 3,
+}
+
+PARAMS_FILE = os.path.join(os.path.dirname(__file__), "params.json")
+
+
+def load_params() -> dict:
+    """鍔犺浇鍙傛暟锛堜紭鍏堜粠JSON锛屽惁鍒欑敤榛樿锛?""
+    if os.path.exists(PARAMS_FILE):
+        try:
+            with open(PARAMS_FILE, "r", encoding="utf-8") as f:
+                return {**DEFAULT_PARAMS, **json.load(f)}
+        except Exception:
+            pass
+    return dict(DEFAULT_PARAMS)
+
+
+def save_params(params: dict):
+    """淇濆瓨璋冩暣鍚庣殑鍙傛暟"""
+    with open(PARAMS_FILE, "w", encoding="utf-8") as f:
+        json.dump(params, f, ensure_ascii=False, indent=2)
+
+
+# 鈹€鈹€ 浠锋牸褰㈡€佹娴?鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+
+def detect_platform_breakout(
+    df: pd.DataFrame,
+    params: Optional[dict] = None,
+) -> dict[str, Any]:
+    """
+    骞冲彴绐佺牬妫€娴?
+    
+    鏉′欢锛?
+    1. 鏈€杩?N 澶╂í鐩樻暣鐞嗭紙鎸箙 < max_amplitude锛?
+    2. 浠锋牸鍦?MA20 闄勮繎
+    3. 鏈€鏂颁环绐佺牬鏁寸悊鍖洪棿涓婃部
+    4. 鎴愪氦閲忛厤鍚?
+    
+    Returns: {detected, score, detail, consolidation_low, consolidation_high, breakout_price, days, amplitude}
+    """
+    if params is None:
+        params = load_params()
+    min_days = params["platform_min_days"]
+    max_amp = params["platform_max_amplitude"]
+    vol_ratio = params["breakout_volume_ratio"]
+
+    result = {"detected": False, "score": 0, "detail": "", 
+              "consol_low": None, "consol_high": None,
+              "breakout_price": None, "days": 0, "amplitude": 0}
+
+    if df is None or len(df) < max(min_days + 10, 60):
+        return result
+
+    closes = df["close"].values
+    highs = df["high"].values
+    lows = df["low"].values
+    volumes = df["vol"].values if "vol" in df.columns else df.get("volume", df.get("amount", pd.Series([0]*len(df)))).values
+
+    # 鍙栨渶杩?min_days 澶╀綔涓烘暣鐞嗗尯闂?
+    recent = df.tail(min_days)
+    consol_high = float(recent["high"].max())
+    consol_low = float(recent["low"].min())
+    amplitude = (consol_high - consol_low) / consol_low if consol_low > 0 else 1
+
+    result["consol_low"] = consol_low
+    result["consol_high"] = consol_high
+    result["amplitude"] = round(amplitude, 4)
+    result["days"] = min_days
+
+    # 鏉′欢1锛氭尟骞呭湪鑼冨洿鍐?
+    if amplitude > max_amp:
+        result["detail"] = f"鎸箙{amplitude*100:.1f}% > 闃堝€納max_amp*100:.0f}%"
+        return result
+
+    # 鏉′欢2锛氬潎绾块檮杩?
+    ma20 = df["close"].rolling(20).mean()
+    latest_close = float(closes[-1])
+    ma20_val = float(ma20.iloc[-1])
+    if ma20_val > 0 and abs(latest_close - ma20_val) / ma20_val > 0.08:
+        result["detail"] += f" 浠锋牸鍋忕MA20({abs(latest_close-ma20_val)/ma20_val*100:.1f}%)"
+        return result
+
+    # 鏉′欢3锛氱獊鐮村尯闂翠笂娌?
+    if latest_close <= consol_high:
+        result["detail"] += " 鏈獊鐮?
+        return result
+
+    result["breakout_price"] = latest_close
+
+    # 鏉′欢4锛氭垚浜ら噺纭
+    ma_vol = float(np.mean(volumes[-params["volume_ma_window"]:])) if len(volumes) >= params["volume_ma_window"] else float(np.mean(volumes))
+    latest_vol = float(volumes[-1])
+    vol_confirmed = latest_vol > ma_vol * vol_ratio
+
+    # 璇勫垎
+    score = 0
+    # 鎸箙瓒婂皬鍒嗚秺楂?
+    amp_score = max(0, min(100, (1 - amplitude / max_amp) * 100))
+    # 璺濈MA20瓒婅繎瓒婂ソ
+    ma_score = max(0, min(100, 100 - abs(latest_close - ma20_val) / ma20_val * 500))
+    # 鎴愪氦閲忕‘璁?
+    vol_score = 80 if vol_confirmed else 30
+    # 妯洏澶╂暟瓒婇暱瓒婂ソ
+    days_score = min(100, min_days * 4)
+
+    score = int(amp_score * 0.3 + ma_score * 0.25 + vol_score * 0.25 + days_score * 0.2)
+
+    result["detected"] = True
+    result["score"] = score
+    result["detail"] = (
+        f"骞冲彴绐佺牬 鎸箙{amplitude*100:.1f}% 妯洏{min_days}d "
+        f"MA20鍋忕{abs(latest_close-ma20_val)/ma20_val*100:.1f}% "
+        f"{'鏀鹃噺' if vol_confirmed else '閲忎笉瓒?}"
+    )
+    return result
+
+
+def detect_n_shape(
+    df: pd.DataFrame,
+    params: Optional[dict] = None,
+) -> dict[str, Any]:
+    """
+    N瀛楃獊鐮存娴?
+    
+    妯″紡锛氭媺鍗?鈫?鍥炶皟锛堢缉閲忥級 鈫?鍐嶈捣
+    Returns: {detected, score, detail, first_leg_return, pullback_depth, second_leg_volume_ratio}
+    """
+    if params is None:
+        params = load_params()
+    min_return = params["n_first_leg_min_return"]
+    max_pullback = params["n_pullback_max"]
+
+    result = {"detected": False, "score": 0, "detail": "",
+              "first_leg_return": 0, "pullback_depth": 0,
+              "second_leg_volume_ratio": 0}
+
+    if df is None or len(df) < 60:
+        return result
+
+    closes = df["close"].values
+    volumes = df["vol"].values if "vol" in df.columns else df.get("volume", df.get("amount", pd.Series([0]*len(df)))).values
+    highs = df["high"].values
+    lows = df["low"].values
+
+    n = len(closes)
+    # 鎵炬渶杩?0澶╁唴鐨勯樁娈垫€ч珮浣庣偣锛堢畝鍖栫増锛氬彇鏈€杩?0澶╁拰20-40澶╋級
+    recent20 = df.tail(20)
+    prev20 = df.iloc[-40:-20] if len(df) > 40 else df.head(20)
+
+    # 绗竴娉紙40-20澶╁墠锛夛細浠庝綆鐐瑰埌楂樼偣
+    first_low = float(prev20["low"].min())
+    first_high = float(prev20["high"].max())
+    first_return = (first_high - first_low) / first_low if first_low > 0 else 0
+
+    if first_return < min_return:
+        result["detail"] = f"绗竴娉㈡定骞厈first_return*100:.1f}% < {min_return*100:.0f}%"
+        return result
+
+    # 鍥炶皟锛堟渶杩?0澶╁唴锛夛細浠庢渶楂樼偣鍥炶惤鍒版渶浣庣偣
+    second_low = float(recent20["low"].min())
+    pullback_depth = (second_low - first_high) / first_high if first_high > 0 else 0
+    # pullback_depth 涓鸿礋鍊艰〃绀哄洖璋冨箙搴?
+    pullback_pct = abs(pullback_depth)
+
+    if pullback_pct > max_pullback:
+        result["detail"] = f"鍥炶皟娣卞害{pullback_pct*100:.1f}% > {max_pullback*100:.1f}%"
+        return result
+
+    # 绗簩娉紙鏈€杩?澶╋級锛氫粠鍥炶皟浣庣偣鍙嶅脊
+    latest_close = float(closes[-1])
+    second_return = (latest_close - second_low) / second_low if second_low > 0 else 0
+
+    if second_return < 0.05:  # 鑷冲皯鍙嶅脊3%
+        result["detail"] = "绗簩娉㈠皻鏈惎鍔?
+        return result
+
+    # 鍥炶皟缂╅噺纭
+    vol_20d_avg = float(np.mean(volumes[-20:])) if len(volumes) >= 20 else float(np.mean(volumes))
+    pullback_vol_avg = float(np.mean(volumes[-10:]))
+    vol_shrink = pullback_vol_avg < vol_20d_avg * params["low_vol_ratio"]
+
+    # 璇勫垎
+    first_leg_score = min(100, first_return / min_return * 50)
+    # 鍥炶皟瓒婃祬瓒婂ソ
+    if pullback_pct <= 0.382:
+        pullback_score = 100
+    elif pullback_pct <= 0.5:
+        pullback_score = 70
+    else:
+        pullback_score = 40
+    second_leg_vol_score = 80 if vol_shrink else 30
+
+    score = int(first_leg_score * 0.3 + pullback_score * 0.4 + second_leg_vol_score * 0.3)
+
+    result["detected"] = True
+    result["score"] = score
+    result["first_leg_return"] = round(first_return, 4)
+    result["pullback_depth"] = round(pullback_depth, 4)
+    result["second_leg_volume_ratio"] = round(pullback_vol_avg / vol_20d_avg, 4) if vol_20d_avg > 0 else 0
+    result["detail"] = (
+        f"N瀛楀舰鎬?绗竴娉?{first_return*100:.1f}% "
+        f"鍥炶皟{pullback_pct*100:.1f}% "
+        f"{'缂╅噺' if vol_shrink else '閲忔湭缂?} "
+        f"绗簩娉?{second_return*100:.1f}%"
+    )
+    return result
+
+
+def detect_vcp(
+    df: pd.DataFrame,
+    params: Optional[dict] = None,
+) -> dict[str, Any]:
+    """
+    VCP 鈥?娉㈠姩鐜囨敹缂╂ā寮?(Mark Minervini)
+    
+    鏍稿績锛氭尝鍔ㄧ巼鍦ㄦ敹缂╋紝娴姩绛圭爜鍦ㄦ秷鍖?
+    杩欐槸鏈€寮虹殑涓诲崌娴墠鍏嗗舰鎬?
+    """
+    if params is None:
+        params = load_params()
+
+    result = {"detected": False, "score": 0, "detail": "",
+              "short_volatility": 0, "long_volatility": 0, "vol_ratio": 0,
+              "price_drop_max": 0}
+
+    if df is None or len(df) < params["vcp_long_window"] + 10:
+        return result
+
+    # 璁＄畻姣忔棩鎸箙
+    daily_range = (df["high"] - df["low"]) / df["close"].shift(1)
+    daily_range = daily_range.dropna()
+
+    if len(daily_range) < params["vcp_long_window"]:
+        return result
+
+    short_window = params["vcp_short_window"]
+    long_window = params["vcp_long_window"]
+    vol_ratio_threshold = params["vcp_volatility_ratio"]
+
+    short_vol = float(daily_range.tail(short_window).mean())
+    long_vol = float(daily_range.tail(long_window).mean())
+
+    vol_ratio = short_vol / long_vol if long_vol > 0 else 99
+    result["short_volatility"] = round(short_vol, 4)
+    result["long_volatility"] = round(long_vol, 4)
+    result["vol_ratio"] = round(vol_ratio, 4)
+
+    if vol_ratio > vol_ratio_threshold:
+        result["detail"] = f"娉㈠姩鐜囨湭鏀剁缉: {short_vol*100:.2f}%/{long_vol*100:.2f}% = {vol_ratio:.2f} > {vol_ratio_threshold:.2f}"
+        return result
+
+    # VCP鏈熼棿浠锋牸涓嶈兘澶у箙涓嬭穼
+    recent = df.tail(short_window)
+    max_close = float(recent["close"].max())
+    min_close = float(recent["close"].min())
+    price_drop = (min_close - max_close) / max_close if max_close > 0 else 0
+    result["price_drop_max"] = round(price_drop, 4)
+
+    if price_drop < -0.05:  # 涓嶈兘璺岃秴杩?%
+        result["detail"] += f" 浠锋牸璺屽箙杩囧ぇ{price_drop*100:.1f}%"
+        return result
+
+    # 璇勫垎
+    # 娉㈠姩鐜囨敹缂╁緱瓒婂共鍑€瓒婂ソ
+    vol_score = max(0, min(100, (1 - vol_ratio) * 200))
+    # 浠锋牸瓒婄ǔ瓒婂ソ
+    price_score = 100 if price_drop >= -0.02 else (80 if price_drop >= -0.035 else 50)
+    # 鐭湡娉㈠姩鐜囧凡缁忓緢浣?
+    stability_score = max(0, min(100, 100 - short_vol * 5000))
+
+    score = int(vol_score * 0.4 + price_score * 0.3 + stability_score * 0.3)
+
+    result["detected"] = True
+    result["score"] = score
+    result["detail"] = (
+        f"VCP 娉㈠姩鐜噞short_vol*100:.2f}%/{long_vol*100:.2f}% "
+        f"= {vol_ratio:.2f} 浠锋牸绋冲畾{-price_drop*100:.1f}%"
+    )
+    return result
+
+
+def detect_v_reversal(
+    df: pd.DataFrame,
+    params: Optional[dict] = None,
+) -> dict[str, Any]:
+    """
+    V褰㈠弽杞娴?
+
+    褰㈡€侊細蹇€熶笅璺岋紙鎭愭厡锛?-> V褰㈠簳 -> 蹇€熷弽寮癸紙鏀鹃噺纭锛?
+    鏍稿績鐗瑰緛锛?
+    1. 鍓嶆湡璺屽箙澶э紙-10%浠ヤ笂锛?
+    2. 瑙佸簳鍚庡揩閫熷弽寮癸紙3-5澶╂敹澶嶅ぇ閮ㄥ垎璺屽箙锛?
+    3. 鍙嶅脊鏀鹃噺锛堟亹鎱岀洏琚悆鎺夛級
+    4. V褰㈠彸渚ч珮浜庡乏渚?
+
+    Returns: {detected, score, detail, drop_depth, recovery_strength, reverse_days}
+    """
+    if params is None:
+        params = load_params()
+
+    result = {"detected": False, "score": 0, "detail": "",
+              "drop_depth": 0, "recovery_strength": 0, "reverse_days": 0,
+              "drop_volume_surge": False, "recovery_volume_surge": False}
+
+    if df is None or len(df) < 60:
+        return result
+
+    closes = df["close"].values
+    volumes = df["vol"].values if "vol" in df.columns else df.get("volume", df.get("amount", pd.Series([0]*len(df)))).values
+
+    n = len(closes)
+
+    # 鎵炬渶杩?0澶╁唴鐨勬渶浣庣偣
+    lookback = min(30, n - 1)
+    recent = df.tail(lookback)
+    min_idx_rel = int(recent["close"].values.argmin())
+    min_idx = n - lookback + min_idx_rel
+
+    if min_idx < 5 or min_idx >= n - 3:
+        result["detail"] = "浣庣偣浣嶇疆涓嶅悎閫?
+        return result
+
+    # 宸︿笅璺屽箙搴︼紙浠庨珮鐐硅穼鍒版渶浣庣偣锛?
+    left_high = float(max(closes[max(0, min_idx - 20):min_idx + 1]))
+    min_price = float(closes[min_idx])
+    drop_depth = (min_price - left_high) / left_high if left_high > 0 else 0
+
+    if drop_depth > -0.08:  # 鑷冲皯瑕佽穼8%
+        result["detail"] = f"鍓嶆湡璺屽箙涓嶈冻 {drop_depth*100:.1f}%"
+        return result
+
+    # 鍙冲弽寮瑰箙搴︼紙浠庢渶浣庣偣鍒版渶鏂颁环锛?
+    max_after = float(max(closes[min_idx:]))
+    recovery = (max_after - min_price) / min_price if min_price > 0 else 0
+
+    if recovery < 0.05:  # 鑷冲皯鍙嶅脊5%
+        result["detail"] = f"鍙嶅脊涓嶈冻 {recovery*100:.1f}%"
+        return result
+
+    # 鍙嶅脊澶╂暟
+    reverse_days = n - min_idx
+    result["reverse_days"] = reverse_days
+    result["drop_depth"] = round(drop_depth, 4)
+    result["recovery_strength"] = round(recovery, 4)
+
+    # 鎴愪氦閲忓垎鏋愨€斺€斾笅璺屾斁閲忥紙鎭愭厡锛?+ 鍙嶅脊鏀鹃噺锛堣祫閲戞壙鎺ワ級
+    vol_20d_avg = float(np.mean(volumes[-min(20, n):]))
+    
+    # 涓嬭穼娈垫垚浜ら噺锛堜綆鐐瑰墠5澶╋級
+    drop_vol_avg = float(np.mean(volumes[max(0, min_idx - 5):min_idx + 1])) if min_idx >= 5 else 0
+    drop_vol_surge = drop_vol_avg > vol_20d_avg * 1.3 if vol_20d_avg > 0 else False
+    result["drop_volume_surge"] = drop_vol_surge
+
+    # 鍙嶅脊娈垫垚浜ら噺锛堜綆鐐硅嚦浠婏級
+    recovery_vol_avg = float(np.mean(volumes[min_idx:])) if n > min_idx else 0
+    recovery_vol_surge = recovery_vol_avg > vol_20d_avg * 1.2 if vol_20d_avg > 0 else False
+    result["recovery_volume_surge"] = recovery_vol_surge
+
+    # 璇勫垎
+    drop_score = min(100, abs(drop_depth) / 0.15 * 100)  # 璺?5%寰?00鍒?
+    recovery_score = min(100, recovery / 0.1 * 100)  # 鍙嶅脊10%寰?00鍒?
+    vol_score = 80 if recovery_vol_surge else (50 if drop_vol_surge else 30)
+    speed_score = max(30, 100 - reverse_days * 3)  # 鍙嶅脊瓒婂揩鍒嗚秺楂?
+
+    score = int(drop_score * 0.3 + recovery_score * 0.3 + vol_score * 0.25 + speed_score * 0.15)
+
+    result["detected"] = True
+    result["score"] = score
+    result["detail"] = (
+        f"V褰㈠弽杞?璺屽箙{abs(drop_depth)*100:.1f}% "
+        f"鍙嶅脊{recovery*100:.1f}% "
+        f"鐢ㄦ椂{reverse_days}d "
+        f"{'鏀鹃噺鎵挎帴' if recovery_vol_surge else '閲忚兘娓╁拰'}"
+    )
+    return result
+
+
+def detect_w_bottom(
+    df: pd.DataFrame,
+    params: Optional[dict] = None,
+) -> dict[str, Any]:
+    """
+    W搴曪紙鍙岄噸搴曪級妫€娴?
+
+    褰㈡€侊細涓嬭穼 -> 鍙嶅脊锛堝乏搴曪級 -> 鍐嶈穼涓嶇牬鍓嶄綆锛堝彸搴曪級 -> 鏀鹃噺绐佺牬棰堢嚎
+    鏍稿績鐗瑰緛锛?
+    1. 涓や釜浣庣偣锛屽彸搴曚笉浣庝簬宸﹀簳锛堟垨鐣ラ珮锛?
+    2. 涓ゅ簳涔嬮棿鏈夊弽寮癸紙棰堢嚎锛?
+    3. 绐佺牬棰堢嚎鏃舵斁閲?
+    4. 鍙冲簳鎴愪氦閲忚悗缂╋紙娴姩绛圭爜鍑忓皯锛?
+
+    Returns: {detected, score, detail, left_bottom, right_bottom, neckline, break_confirmed}
+    """
+    if params is None:
+        params = load_params()
+
+    result = {"detected": False, "score": 0, "detail": "",
+              "left_bottom": 0, "right_bottom": 0, "neckline": 0,
+              "break_confirmed": False, "bottom_spacing": 0}
+
+    if df is None or len(df) < 60:
+        return result
+
+    closes = df["close"].values
+    highs = df["high"].values
+    lows = df["low"].values
+    volumes = df["vol"].values if "vol" in df.columns else df.get("volume", df.get("amount", pd.Series([0]*len(df)))).values
+
+    n = len(closes)
+    if n < 45:
+        return result
+
+    # 涓夊垎娉曪細鎵炬渶杩?5澶╁唴鐨勪袱涓綆鐐?
+    # 鏃堕棿娈?锛堟渶杩?5-25澶╋級銆佹椂闂存2锛堟渶杩?5-5澶╋級
+    seg1 = df.iloc[-45:-20] if n >= 45 else df.iloc[:max(1, n-20)]
+    seg2 = df.iloc[-20:-3] if n >= 20 else df.iloc[:max(1, n-3)]
+
+    if len(seg1) < 5 or len(seg2) < 5:
+        return result
+
+    left_low = float(seg1["low"].min())
+    left_low_idx = int(seg1["low"].idxmin()) if hasattr(seg1["low"], "idxmin") else int(seg1["low"].values.argmin())
+    right_low = float(seg2["low"].min())
+
+    # 棰堢嚎锛氫袱搴曚箣闂寸殑楂樼偣
+    between_segs = df.iloc[-40:-5] if n >= 40 else df
+    neckline = float(between_segs["high"].max())
+
+    result["left_bottom"] = round(left_low, 2)
+    result["right_bottom"] = round(right_low, 2)
+    result["neckline"] = round(neckline, 2)
+
+    # 鏉′欢1锛氬彸搴曚笉浣庝簬宸﹀簳锛堝厑璁哥暐浣?%锛?
+    bottom_diff = (right_low - left_low) / left_low if left_low > 0 else 0
+    if bottom_diff < -0.01:  # 鍙冲簳涓嶈兘浣庝簬宸﹀簳瓒呰繃1%
+        result["detail"] = f"鍙冲簳({right_low:.2f}) < 宸﹀簳({left_low:.2f})"
+        return result
+
+    # 鏉′欢2锛氫袱搴曚箣闂存湁瓒冲绌洪棿锛堣嚦灏?%鍙嶅脊锛?
+    left_peak = float(seg1["high"].max())
+    rebound = (left_peak - left_low) / left_low if left_low > 0 else 0
+    if rebound < 0.03:
+        result["detail"] = f"涓ゅ簳闂村弽寮逛笉瓒?{rebound*100:.1f}%"
+        return result
+
+    result["bottom_spacing"] = round(rebound, 4)
+
+    # 鏉′欢3锛氱獊鐮撮绾?
+    latest_close = float(closes[-1])
+    break_confirmed = latest_close > neckline * 1.01  # 绐佺牬1%
+    result["break_confirmed"] = break_confirmed
+
+    # 鏉′欢4锛氱獊鐮存斁閲?
+    ma_vol = float(np.mean(volumes[-20:])) if n >= 20 else float(np.mean(volumes))
+    latest_vol = float(volumes[-1])
+    vol_break = latest_vol > ma_vol * 1.3 if ma_vol > 0 else False
+
+    # 鏉′欢5锛氬彸搴曠缉閲?
+    right_vol_avg = float(np.mean([volumes[i] for i in range(-20, -3)])) if n >= 20 else 0
+    left_vol_avg = float(np.mean([volumes[i] for i in range(-45, -20)])) if n >= 45 else 0
+    vol_shrink_right = right_vol_avg < left_vol_avg * 0.8 if left_vol_avg > 0 else False
+
+    # 璇勫垎
+    # 搴曢儴瀵圭О鎬э紙瓒婃帴杩戣秺濂斤級
+    symmetry = max(0, 100 - abs(bottom_diff) * 500)
+    # 绐佺牬纭
+    break_score = 100 if break_confirmed else (40 if latest_close > neckline else 0)
+    # 鎴愪氦閲忕‘璁?
+    vol_score = 100 if vol_break and vol_shrink_right else (60 if vol_break else (40 if vol_shrink_right else 20))
+    # 棰堢嚎浣嶇疆锛堣秺楂樿秺濂斤級
+    neck_score = min(100, neckline / left_low * 50) if left_low > 0 else 50
+
+    score = int(symmetry * 0.25 + break_score * 0.35 + vol_score * 0.25 + neck_score * 0.15)
+
+    result["detected"] = True
+    result["score"] = score
+    result["detail"] = (
+        f"W搴?宸﹀簳{left_low:.2f}鍙冲簳{right_low:.2f} "
+        f"棰堢嚎{neckline:.2f} "
+        f"{'鏀鹃噺绐佺牬' if vol_break else '閲忎笉瓒?}"
+    )
+    return result
+
+
+# 鈹€鈹€ 鍔犻€熷害妫€娴?鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+
+def measure_acceleration(
+    df: pd.DataFrame,
+    params: Optional[dict] = None,
+) -> dict[str, Any]:
+    """
+    娴嬮噺瓒嬪娍鍔犻€熷害锛堜簩闃跺鏁帮級
+    
+    鍏抽敭姒傚康锛氬姞閫?= 鏈€杩戠殑鏀剁泭鐜?- 涔嬪墠鐨勬敹鐩婄巼
+    鍦烘櫙鍒嗘瀽锛?
+    - 璐熲啋姝ｏ細瓒嬪娍鍙嶈浆/鍚姩
+    - 寮扁啋寮猴細鍔犻€熶笂娑紙鏈€浣筹級
+    - 寮衡啋寮憋細鍔ㄨ兘琛扮
+    - 寮衡啋鏇村己锛氬彲鑳芥渶鍚庡啿鍒猴紙楂橀闄╋級
+    """
+    if params is None:
+        params = load_params()
+    window = params["accel_window"]
+    threshold = params["accel_threshold"]
+
+    result = {"acceleration": 0, "trend_status": "unknown",
+              "recent_return": 0, "prior_return": 0,
+              "is_accelerating": False, "score": 0, "detail": ""}
+
+    if df is None or len(df) < window * 3:
+        return result
+
+    closes = df["close"].values
+    n = len(closes)
+
+    # 杩戞湡鏀剁泭
+    recent_return = (closes[-1] - closes[-1 - window]) / closes[-1 - window] if closes[-1 - window] > 0 else 0
+    # 鍓嶆湡鏀剁泭
+    prior_return = (closes[-1 - window] - closes[-1 - window * 2]) / closes[-1 - window * 2] if closes[-1 - window * 2] > 0 else 0
+
+    acceleration = recent_return - prior_return
+
+    result["recent_return"] = round(recent_return, 4)
+    result["prior_return"] = round(prior_return, 4)
+    result["acceleration"] = round(acceleration, 4)
+
+    # 鍔犻€熷己搴︽瘮渚嬪垎
+    # 鍩虹40锛屾瘡5%鍔犻€熷€煎姞15鍒嗭紝涓婇檺85
+    accel_mag = abs(acceleration)
+    prop = min(85, max(10, int(40 + (accel_mag / 0.05) * 15)))
+
+    # 瓒嬪娍鐘舵€佸垽瀹?
+    if recent_return > 0 and acceleration > threshold:
+        result["trend_status"] = "鍔犻€熶笂娑?
+        result["is_accelerating"] = True
+        result["score"] = prop
+        result["detail"] = f"鍔犻€熶笂娑?鍓嶆湡{prior_return*100:.1f}%->杩戞湡{recent_return*100:.1f}% 鈻?{acceleration*100:.1f}%"
+    elif recent_return > 0 and acceleration >= -threshold:
+        result["trend_status"] = "绋虫涓婃定"
+        result["score"] = max(40, prop - 10)
+        result["detail"] = f"绋虫涓婃定 鍓嶆湡{prior_return*100:.1f}%->杩戞湡{recent_return*100:.1f}%"
+    elif recent_return > 0 and acceleration < -threshold:
+        result["trend_status"] = "鍔ㄨ兘琛扮"
+        result["score"] = max(15, 40 - int(accel_mag / 0.05) * 10)
+        result["detail"] = f"鍔ㄨ兘琛扮 鍓嶆湡{prior_return*100:.1f}%->杩戞湡{recent_return*100:.1f}% 鈻硔acceleration*100:.1f}%"
+    elif recent_return < 0 and acceleration > threshold:
+        result["trend_status"] = "瑙﹀簳鍙嶅脊"
+        result["score"] = min(75, prop - 5)
+        result["is_accelerating"] = True
+        result["detail"] = f"瑙﹀簳鍙嶅脊 鍓嶆湡{prior_return*100:.1f}%->杩戞湡{recent_return*100:.1f}% 鈻?{acceleration*100:.1f}%"
+    elif recent_return < -0.05:
+        result["trend_status"] = "涓嬭穼"
+        result["score"] = 10
+        result["detail"] = f"涓嬭穼 杩戞湡{recent_return*100:.1f}%"
+    else:
+        result["trend_status"] = "妯洏"
+        result["score"] = 40
+        result["detail"] = f"妯洏 杩戞湡{recent_return*100:.1f}%"
+
+    return result
+
+
+# 鈹€鈹€ 鎴愪氦閲忕粨鏋勮瘎鍒?鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+
+def score_volume_structure(
+    df: pd.DataFrame,
+    params: Optional[dict] = None,
+) -> dict[str, Any]:
+    """
+    鎴愪氦閲忕粨鏋勮瘎鍒?
+    
+    鍏虫敞鐐癸細
+    1. 绐佺牬鏀鹃噺 鈫?鍔犲垎
+    2. 鍥炶皟缂╅噺 鈫?鍔犲垎锛堝仴搴风粨鏋勶級
+    3. 杩炵画鏀鹃噺 鈫?鍔犲垎
+    4. 闅愮幇鏀鹃噺 鈫?鍔犲垎锛堟満鏋勫惛绛圭棔杩癸級
+    5. 閲忎环鑳岀 鈫?涓ラ噸鎵ｅ垎
+    6. 鏀鹃噺婊炴定 鈫?涓ラ噸鎵ｅ垎
+    """
+    if params is None:
+        params = load_params()
+    ma_window = params["volume_ma_window"]
+    high_ratio = params["high_vol_ratio"]
+
+    result = {"score": 0, "breakout_volume_confirmed": False,
+              "pullback_volume_shrinking": False,
+              "volume_divergence": False, "consecutive_volume": False,
+              "detail": "", "recent_vol_ratio": 0}
+
+    if df is None or len(df) < ma_window + 10:
+        return result
+
+    volumes = df["vol"].values if "vol" in df.columns else df.get("volume", df.get("amount", pd.Series([0]*len(df)))).values
+    closes = df["close"].values
+
+    ma_vol = float(np.mean(volumes[-ma_window:])) if len(volumes) >= ma_window else float(np.mean(volumes))
+    latest_vol = float(volumes[-1])
+    vol_ratio_ = latest_vol / ma_vol if ma_vol > 0 else 1
+
+    result["recent_vol_ratio"] = round(vol_ratio_, 2)
+
+    score = 50  # 鍩虹鍒?
+    details = []
+
+    # 1. 鏈€鏂版斁閲?
+    if vol_ratio_ > high_ratio:
+        result["breakout_volume_confirmed"] = True
+        score += 15
+        details.append("鏀鹃噺绐佺牬")
+
+    # 2. 鍥炶皟缂╅噺锛堣繃鍘?0澶╂渶浣庨噺鍦ㄦ渶杩?澶╁唴锛?
+    if len(volumes) >= 20:
+        vol_10d = volumes[-10:]
+        lowest_10d = min(vol_10d)
+        if lowest_10d < ma_vol * params["low_vol_ratio"]:
+            result["pullback_volume_shrinking"] = True
+            score += 10
+            details.append("鍥炶皟缂╅噺")
+
+    # 3. 杩炵画鏀鹃噺锛堥樁姊紡锛?
+    if len(volumes) >= 5:
+        last_3 = volumes[-3:]
+        consecutive = all(last_3[i] >= volumes[-6 + i] * 1.1 for i in range(3))
+        if consecutive:
+            result["consecutive_volume"] = True
+            score += 15
+            details.append("闃舵鏀鹃噺")
+
+    # 4. 闅愮幇鏀鹃噺锛堣繃鍘?0澶╂湁鍗曟棩>2x鍧囬噺鍚庣缉閲忎笉璺岋級
+    if len(volumes) >= 20:
+        vol_20d = volumes[-20:-5]  # 鎺掗櫎鏈€杩?澶?
+        for i, v in enumerate(vol_20d):
+            if v > ma_vol * 2.0:
+                # 鏀鹃噺鍚?-10澶╀环鏍间笉璺?
+                idx = len(volumes) - 20 + i
+                if idx + 5 < len(closes) and closes[idx + 5] >= closes[idx] * 0.95:
+                    score += 8
+                    details.append("鍚哥鐥曡抗")
+                    break
+
+    # 5. 閲忎环鑳岀锛堜环鏍兼柊楂樹絾閲忎笉瓒呰繃鍧囬噺锛?
+    if len(closes) >= 10 and len(volumes) >= 10:
+        if closes[-1] == max(closes[-10:]):
+            if vol_ratio_ < 0.8:
+                result["volume_divergence"] = True
+                score -= 40
+                details.append("**閲忎环鑳岀")
+
+    # 6. 鏀鹃噺婊炴定
+    if len(closes) >= 5 and len(volumes) >= 5:
+        if vol_ratio_ > 1.3:
+            ret_5d = (closes[-1] - closes[-5]) / closes[-5]
+            if ret_5d < 0.01:
+                score -= 35
+                details.append("**鏀鹃噺婊炴定")
+
+    result["score"] = max(0, min(100, score))
+    result["detail"] = " ".join(details) if details else "涓€?
+    return result
+
+
+# 鈹€鈹€ 鏉垮潡鑱斿姩妫€娴?鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+
+_SECTOR_CACHE_LAST: tuple = (None, None)
+"""(id(all_signals), {sector: {strong, weak, total}})"""
+
+def _build_sector_cache(all_signals: dict) -> dict:
+    """棰勮绠楁瘡涓澘鍧楃殑淇″彿瀵嗗害缁熻 (O(n))锛屽甫 self-caching"""
+    global _SECTOR_CACHE_LAST
+    sig_id = id(all_signals)
+    if _SECTOR_CACHE_LAST[0] is sig_id:
+        return _SECTOR_CACHE_LAST[1]
+    from src.tools.a_stock_api import get_stock_info
+    cache: dict = {}
+    for code, sig in all_signals.items():
+        try:
+            info = get_stock_info(code)
+            if info and info.industry:
+                sec = info.industry
+            else:
+                continue
+        except Exception:
+            continue
+        if sec not in cache:
+            cache[sec] = {"strong": 0, "weak": 0, "total": 0}
+        cache[sec]["total"] += 1
+        ts = sig.get("total_score", 0) if isinstance(sig, dict) else 0
+        ws = load_params().get("weak_signal", 60)
+        if ts >= ws:
+            cache[sec]["strong"] += 1
+        elif ts >= 35:
+            cache[sec]["weak"] += 1
+    _SECTOR_CACHE_LAST = (sig_id, cache)
+    return cache
+
+
+def score_sector_context(
+    ts_code: str,
+    all_signals: dict[str, Any],
+    params: Optional[dict] = None,
+    sector_cache: Optional[dict] = None,
+) -> dict[str, Any]:
+    """
+    鏉垮潡鑱斿姩璇勫垎 (澧炲己鐗堬紝O(1) 鏌ヨ〃浼樺寲)
+
+    sector_cache: 棰勮绠楃殑 {sector_name: {strong, weak, total}}锛岀敱 _build_sector_cache 鐢熸垚銆?
+                  浼?None 鏃跺唴閮ㄦ噿鏋勫缓锛堜粎鍦?Phase 2 鍦烘櫙涓嬪缓璁璁＄畻锛夈€?
+    """
+    if params is None:
+        params = load_params()
+
+    result = {"score": 30, "peer_signals": 0, "peers_in_sector": 0,
+              "detail": "", "sector_name": "",
+              "sector_index_perf": "N/A", "sector_index_code": ""}
+
+    try:
+        from src.tools.a_stock_api import get_stock_info, get_sector_index_perf
+    except ImportError:
+        return result
+
+    info = get_stock_info(ts_code)
+    if not info or not info.industry:
+        result["detail"] = "鏃犺涓氫俊鎭?
+        return result
+
+    sector = info.industry
+    result["sector_name"] = sector
+
+    # 鈹€鈹€ Part 1: 鐢充竾鎸囨暟杩戞湡琛ㄧ幇 (0-50鍒? 鈹€鈹€
+    try:
+        perf_data = get_sector_index_perf(ts_code, cache_minutes=60)
+        ps = perf_data.get("perf_score", 50)
+        index_score = min(50, max(0, int(ps * 50 / 85)))
+        result["sector_index_perf"] = f"{perf_data.get('perf_20d', 0):.1f}%"
+        result["sector_index_code"] = perf_data.get("index_code", "")
+    except Exception:
+        index_score = 25
+
+    # 鈹€鈹€ Part 2: 鏉垮潡淇″彿瀵嗗害 (0-50鍒? 鈹€鈹€ O(1) 鏌ヨ〃 鈹€鈹€
+    if sector_cache is None and all_signals:
+        sector_cache = _build_sector_cache(all_signals)
+    sec_data = (sector_cache or {}).get(sector, {"strong": 0, "weak": 0, "total": 0})
+
+    result["peers_in_sector"] = sec_data["total"]
+    result["peer_signals"] = sec_data["strong"]
+
+    strong_cnt = sec_data["strong"]
+    weak_cnt = sec_data["weak"]
+
+    if strong_cnt >= params.get("sector_min_peers", 3):
+        peer_score = 50
+        peer_detail = f"鍚屾{strong_cnt}鍙?
+    elif strong_cnt >= 1:
+        peer_score = 35
+        peer_detail = f"鍏辨尟{strong_cnt}鍙?
+    elif weak_cnt >= 5:
+        peer_score = 25
+        peer_detail = f"寮傚姩{weak_cnt}鍙?
+    else:
+        peer_score = 10
+        peer_detail = "鏃犲叡鎸?
+
+    result["score"] = index_score + peer_score
+    result["detail"] = f"鎸囨暟{result['sector_index_perf']}({index_score})+{peer_detail}({peer_score})"
+
+    return result
+
+
+# 鈹€鈹€ 浼俊鍙锋娴?鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+
+def detect_fake_signal(
+    df: pd.DataFrame,
+    pattern_result: dict[str, Any],
+    accel_result: dict[str, Any],
+    volume_result: dict[str, Any],
+    params: Optional[dict] = None,
+) -> dict[str, Any]:
+    """
+    浼俊鍙锋娴?
+    
+    妫€娴嬪悇绉嶅亣淇″彿鐗瑰緛锛岃繑鍥炴墸鍒嗗€煎拰璇︾粏璇存槑
+    鎵ｅ垎椤圭疮璁★紝浠庢€诲垎鎵ｉ櫎
+    """
+    if params is None:
+        params = load_params()
+
+    result = {"fak e_score": 0, "is_likely_fake": False,
+              "flags": [], "detail": ""}
+
+    if df is None or len(df) < 30:
+        return result
+
+    closes = df["close"].values
+    volumes = df["vol"].values if "vol" in df.columns else df.get("volume", df.get("amount", pd.Series([0]*len(df)))).values
+    highs = df["high"].values
+    lows = df["low"].values
+
+    fake_score = 0
+    flags = []
+
+    # 1. 閲忎环鑳岀锛堜环鏍兼柊楂橀噺涓嶈冻锛?
+    if volume_result.get("volume_divergence"):
+        fake_score += 40
+        flags.append("閲忎环鑳岀(-40)")
+
+    # 2. 鏀鹃噺婊炴定
+    if "鏀鹃噺婊炴定" in volume_result.get("detail", ""):
+        fake_score += 35
+        flags.append("鏀鹃噺婊炴定(-35)")
+
+    # 3. 鎹㈡墜鐜囧紓甯搁珮
+    if "turnover" in df.columns:
+        recent_turnover = float(df["turnover"].tail(5).mean())
+        if recent_turnover > 20:
+            fake_score += 30
+            flags.append(f"鎹㈡墜鐜噞recent_turnover:.0f}%(-30)")
+
+    # 4. 鍓嶆湡娑ㄥ箙杩囧ぇ
+    if len(closes) >= 60:
+        ret_60d = (closes[-1] - closes[-60]) / closes[-60] if closes[-60] > 0 else 0
+        if ret_60d > 0.5:
+            fake_score += 25
+            flags.append(f"60鏃ユ定骞厈ret_60d*100:.0f}%(-25)")
+
+    # 5. 澶ф尟骞呭紓甯?
+    if len(highs) >= 20:
+        recent_range = (highs[-1] - lows[-1]) / closes[-1] if closes[-1] > 0 else 0
+        avg_range = np.mean([(highs[i] - lows[i]) / closes[i] for i in range(-20, 0)]) if all(c > 0 for c in closes[-20:]) else 0
+        if avg_range > 0 and recent_range > avg_range * 3:
+            fake_score += 20
+            flags.append("寮傚父鏃ュ唴鎸箙(-20)")
+
+    # 6. 鍔ㄨ兘琛扮褰㈡€?
+    if accel_result.get("trend_status") == "鍔ㄨ兘琛扮":
+        fake_score += 25
+        flags.append("鍔ㄨ兘琛扮(-25)")
+
+    # 7. 涓婃定鍚庢斁澶ф垚浜ら噺浣嗕环鏍煎仠婊?
+    if len(volumes) >= 10 and len(closes) >= 10:
+        vol_increasing = all(volumes[-i] > volumes[-i-1] for i in range(1, 4))
+        price_stagnant = abs(closes[-1] - closes[-4]) / closes[-4] < 0.02 if closes[-4] > 0 else False
+        if vol_increasing and price_stagnant:
+            fake_score += 35
+            flags.append("閲忓浠蜂笉娑?鍑鸿揣(-35)")
+
+    result["fake_score"] = fake_score
+    result["is_likely_fake"] = fake_score >= 60
+    result["flags"] = flags
+    result["detail"] = " ".join(flags) if flags else "鏃犳樉钁椾吉淇″彿"
+    return result
+
+
+# 鈹€鈹€ 缁煎悎鍒嗘瀽锛堜富鍏ュ彛锛?鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+
+def analyze_stock(
+    ts_code: str,
+    df: pd.DataFrame,
+    all_signals: Optional[dict[str, Any]] = None,
+    params: Optional[dict] = None,
+    sector_cache: Optional[dict] = None,
+) -> dict[str, Any]:
+    """
+    瀵瑰崟涓偂绁ㄨ繘琛屽畬鏁寸殑褰㈡€佸垎鏋?
+
+    Args:
+        ts_code: 鑲＄エ浠ｇ爜
+        df: OHLCV DataFrame
+        all_signals: 鍙€夛紝鎵弿鍣ㄤ紶杩囨潵渚涙澘鍧楄仈鍔ㄥ垎鏋?
+        params: 鍙€夊弬鏁拌鐩?
+        sector_cache: 鍙€夛紝棰勮绠楃殑鏉垮潡淇″彿瀵嗗害 {'sector': {strong,weak,total}}
+
+    Returns:
+        signal dict
+    """
+    params = params or load_params()
+    all_signals = all_signals or {}
+
+    result = {
+        "ts_code": ts_code,
+        "detected": False,
+        "total_score": 0,
+        "pattern_type": None,
+        "pattern_score": 0,
+        "volume_score": 0,
+        "sector_score": 0,
+        "accel_score": 0,
+        "fake_score": 0,
+        "final_score": 0,
+        "entry_price": float(df["close"].iloc[-1]) if df is not None and len(df) > 0 else 0,
+        "detail": "",
+        "components": {},
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+    }
+
+    if df is None or len(df) < 40:
+        result["detail"] = "鏁版嵁涓嶈冻"
+        return result
+
+    # 鈹€鈹€ 鍚勭淮搴﹀垎鏋?鈹€鈹€
+    # 褰㈡€佹娴嬶紙鍙栨渶楂樺垎鐨勫舰鎬侊級
+    patterns = []
+    for detector, name in [
+        (detect_vcp, "VCP"),
+        (detect_v_reversal, "V褰㈠弽杞?),
+        (detect_w_bottom, "W搴?),
+        (detect_platform_breakout, "骞冲彴绐佺牬"),
+        (detect_n_shape, "N瀛楃獊鐮?),
+    ]:
+        p = detector(df, params)
+        if p["detected"]:
+            patterns.append((p["score"], name, p))
+
+    if patterns:
+        best = max(patterns, key=lambda x: x[0])
+        result["pattern_type"] = best[1]
+        result["pattern_score"] = best[0]
+        result["components"]["pattern_detail"] = best[2]
+    else:
+        result["pattern_score"] = 0
+        result["components"]["pattern_detail"] = {"detail": "鏈娴嬪埌褰㈡€?}
+
+    # 鎴愪氦閲?
+    vol = score_volume_structure(df, params)
+    result["volume_score"] = vol["score"]
+    result["components"]["volume_detail"] = vol
+
+    # 鍔犻€熷害
+    accel = measure_acceleration(df, params)
+    result["accel_score"] = accel["score"]
+    result["components"]["accel_detail"] = accel
+
+    # 鏉垮潡鑱斿姩锛堥渶瑕?all_signals锛?
+    sector_ctx = score_sector_context(ts_code, all_signals, params, sector_cache)
+    result["sector_score"] = sector_ctx["score"]
+    result["components"]["sector_detail"] = sector_ctx
+
+    # 浼俊鍙?
+    fake = detect_fake_signal(df,
+        result["components"].get("pattern_detail", {}),
+        accel, vol, params)
+    result["fake_score"] = fake["fake_score"]
+    result["components"]["fake_detail"] = fake
+
+    # 鈹€鈹€ 鍔犳潈鎬诲垎 鈹€鈹€
+    raw_score = (
+        params["w_price_pattern"] * result["pattern_score"]
+        + params["w_volume"] * result["volume_score"]
+        + params["w_sector"] * result["sector_score"]
+        + params["w_acceleration"] * result["accel_score"]
+    )
+    result["total_score"] = int(raw_score)
+    result["final_score"] = max(0, int(raw_score - fake["fake_score"]))
+
+    # detected = 鏈夊舰鎬佸彂鐜帮紙涓嶇鍒嗘暟楂樹綆锛?
+    # signal_grade 鐢?classify_signal 鍐冲畾鏄惁鍙氦鏄?
+    result["detected"] = result["pattern_type"] is not None
+
+    # 璇︽儏
+    details = []
+    best_pattern = result["components"].get("pattern_detail", {})
+    if isinstance(best_pattern, dict):
+        details.append(best_pattern.get("detail", ""))
+    details.append(vol.get("detail", ""))
+    details.append(accel.get("detail", ""))
+    details.append(sector_ctx.get("detail", ""))
+    if fake["is_likely_fake"]:
+        details.append(f"** {fake.get('detail', '')}")
+    result["detail"] = " | ".join(d for d in details if d)
+
+    return result
+
+
+# 鈹€鈹€ 淇″彿寮哄害鍒嗙骇 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+
+def classify_signal(signal: dict, params: Optional[dict] = None) -> str:
+    """杩斿洖淇″彿绛夌骇: STRONG / WEAK / NONE / FAKE"""
+    if params is None:
+        params = load_params()
+    if not signal.get("detected"):
+        return "NONE"
+    if signal.get("fake_score", 0) >= 60:
+        return "FAKE"
+    if signal.get("final_score", 0) >= params["strong_signal"]:
+        return "STRONG"
+    if signal.get("final_score", 0) >= params["weak_signal"]:
+        return "WEAK"
+    return "NONE"
+
+
+if __name__ == "__main__":
+    print("Surge Engine loaded.")
+    print(f"Default params: {json.dumps(load_params(), ensure_ascii=False, indent=2)}")
