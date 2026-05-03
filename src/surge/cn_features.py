@@ -15,12 +15,16 @@ from datetime import datetime, timedelta
 from typing import Optional
 import numpy as np
 import pandas as pd
+from dotenv import load_dotenv
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
+load_dotenv(os.path.join(ROOT, '.env'))
 
 # Tushare token
-TOKEN = "5243de737c1a25110583352fde4458266314877dd0c342cae1a9f4c7"
+TOKEN = os.getenv('TUSHARE_PRO_TOKEN', '')
+if not TOKEN:
+    raise RuntimeError("TUSHARE_PRO_TOKEN 未设置，请在 .env 中配置或设置环境变量")
 CACHE_DIR = os.path.join(ROOT, 'data', 'cache', 'cn_features')
 os.makedirs(CACHE_DIR, exist_ok=True)
 

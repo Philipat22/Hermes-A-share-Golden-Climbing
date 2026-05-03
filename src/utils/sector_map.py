@@ -25,6 +25,10 @@ import sys
 import io
 from datetime import datetime
 from typing import Optional
+from dotenv import load_dotenv
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+load_dotenv(os.path.join(ROOT, '.env'))
 
 import pandas as pd
 import tushare as ts
@@ -32,7 +36,7 @@ import tushare as ts
 # ──────────────────────────────────────────────
 # Token
 # ──────────────────────────────────────────────
-TUSHARE_TOKEN = os.getenv("TUSHARE_PRO_TOKEN") or "5243de737c1a25110583352fde4458266314877dd0c342cae1a9f4c7"
+TUSHARE_TOKEN = os.getenv("TUSHARE_PRO_TOKEN", "")
 
 # ──────────────────────────────────────────────
 # 18 个核心板块 → 申万行业关键词（用子串匹配，精确定位）
