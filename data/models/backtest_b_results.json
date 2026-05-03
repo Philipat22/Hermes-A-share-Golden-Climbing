@@ -1,0 +1,67 @@
+{
+  "strategy": {
+    "total_ret": 0.8044958191908587,
+    "annual_ret": 3.123387143135189,
+    "annual_vol": 0.42875923773521185,
+    "sharpe": 3.591443448236577,
+    "max_dd": 0.0,
+    "win_rate": 0.6,
+    "calmar": Infinity
+  },
+  "benchmark": {
+    "total_ret": 0.07204396438349381,
+    "annual_ret": 0.18170814950373293,
+    "annual_vol": 0.23128577550319426,
+    "sharpe": 0.6892973841944336,
+    "max_dd": -0.07554238479369396,
+    "win_rate": 0.6,
+    "calmar": 2.4053801054861768
+  },
+  "alpha": 2.9416789936314562,
+  "avg_picks": 2.6,
+  "n_periods": 5,
+  "years": 0.4166666666666667,
+  "zero_pick_pct": 0.4,
+  "picks_log": [
+    {
+      "date": "2025-10-17",
+      "picks": 0,
+      "avg_score": 0,
+      "ret": 0.0,
+      "bm_ret": 6.57,
+      "excess": -6.57
+    },
+    {
+      "date": "2025-11-19",
+      "picks": 2,
+      "avg_score": 0.409,
+      "ret": 16.72,
+      "bm_ret": -1.9,
+      "excess": 18.62
+    },
+    {
+      "date": "2025-12-17",
+      "picks": 7,
+      "avg_score": 0.452,
+      "ret": 25.68,
+      "bm_ret": 9.19,
+      "excess": 16.49
+    },
+    {
+      "date": "2026-01-19",
+      "picks": 4,
+      "avg_score": 0.445,
+      "ret": 23.01,
+      "bm_ret": 1.59,
+      "excess": 21.42
+    },
+    {
+      "date": "2026-02-25",
+      "picks": 0,
+      "avg_score": 0,
+      "ret": 0.0,
+      "bm_ret": -7.55,
+      "excess": 7.55
+    }
+  ]
+}

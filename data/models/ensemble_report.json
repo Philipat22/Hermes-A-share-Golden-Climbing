@@ -1,0 +1,22 @@
+{
+  "lightgbm": {
+    "auc": 0.6917,
+    "best_excess": 0.2691,
+    "best_th": 0.45,
+    "picks": 5
+  },
+  "xgboost": {
+    "auc": 0.6861,
+    "best_excess": 0.1405,
+    "best_th": 0.4,
+    "picks": 14
+  },
+  "ensemble_avg": {
+    "auc": 0.691,
+    "best_excess": 0.1895,
+    "best_th": 0.4,
+    "picks": 21
+  },
+  "best_model": "LightGBM",
+  "ensemble_method": "avg"
+}

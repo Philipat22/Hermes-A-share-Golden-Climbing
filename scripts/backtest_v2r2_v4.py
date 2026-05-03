@@ -31,7 +31,7 @@ import tushare as ts
 warnings.filterwarnings('ignore')
 ROOT = r'D:\AIHedgeFund\ai-hedge-fund-main'
 PRICE = r'D:\AIHedgeFund\ai-hedge-fund-main\data\cache\backtest_prices_extended.pkl'
-TU_TOKEN = '5243de737c1a25110583352fde4458266314877dd0c342cae1a9f4c7'
+TU_TOKEN = os.getenv('TUSHARE_PRO_TOKEN', '')
 np.random.seed(42)
 
 with open(os.path.join(ROOT, 'src', 'surge', 'params.json')) as f:

@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-04-30T11:12:27.590259",
+  "total_signals": 0,
+  "params": {
+    "platform_min_days": 15,
+    "platform_max_amplitude": 0.25,
+    "breakout_volume_ratio": 1.5,
+    "n_first_leg_min_return": 0.12,
+    "n_pullback_max": 0.618,
+    "n_second_leg_volume_ratio": 0.7,
+    "vcp_volatility_ratio": 0.7,
+    "vcp_short_window": 10,
+    "vcp_long_window": 30,
+    "accel_window": 5,
+    "accel_threshold": 0.03,
+    "volume_ma_window": 20,
+    "high_vol_ratio": 1.5,
+    "low_vol_ratio": 0.7,
+    "w_price_pattern": 0.35,
+    "w_volume": 0.25,
+    "w_sector": 0.25,
+    "w_acceleration": 0.15,
+    "strong_signal": 180,
+    "weak_signal": 120,
+    "sector_min_peers": 3
+  },
+  "signals": []
+}

@@ -1,0 +1,364 @@
+{
+  "timestamp": "2026-05-01T21:49:29.654406",
+  "baseline": {
+    "label": "BuyAll",
+    "params": "baseline",
+    "n_trades": 20681,
+    "win_rate": "47.9%",
+    "avg_return": "+1.13%",
+    "excess": "+0.34%",
+    "sharpe": 1.21,
+    "max_return": "+390.62%",
+    "min_return": "-65.84%"
+  },
+  "fixed": [
+    {
+      "label": "Fixed>=0.20",
+      "params": "threshold=0.2",
+      "n_trades": 5296,
+      "win_rate": "66.9%",
+      "avg_return": "+8.14%",
+      "excess": "+7.35%",
+      "sharpe": 6.94,
+      "max_return": "+356.73%",
+      "min_return": "-52.75%"
+    },
+    {
+      "label": "Fixed>=0.25",
+      "params": "threshold=0.25",
+      "n_trades": 2078,
+      "win_rate": "80.4%",
+      "avg_return": "+13.79%",
+      "excess": "+13.00%",
+      "sharpe": 10.88,
+      "max_return": "+356.73%",
+      "min_return": "-52.75%"
+    },
+    {
+      "label": "Fixed>=0.30",
+      "params": "threshold=0.3",
+      "n_trades": 1060,
+      "win_rate": "86.1%",
+      "avg_return": "+17.01%",
+      "excess": "+16.22%",
+      "sharpe": 12.07,
+      "max_return": "+356.73%",
+      "min_return": "-52.75%"
+    },
+    {
+      "label": "Fixed>=0.35",
+      "params": "threshold=0.35",
+      "n_trades": 623,
+      "win_rate": "89.9%",
+      "avg_return": "+18.75%",
+      "excess": "+17.96%",
+      "sharpe": 13.87,
+      "max_return": "+220.00%",
+      "min_return": "-52.75%"
+    },
+    {
+      "label": "Fixed>=0.40",
+      "params": "threshold=0.4",
+      "n_trades": 429,
+      "win_rate": "90.4%",
+      "avg_return": "+19.55%",
+      "excess": "+18.76%",
+      "sharpe": 14.42,
+      "max_return": "+220.00%",
+      "min_return": "-29.69%"
+    },
+    {
+      "label": "Fixed>=0.45",
+      "params": "threshold=0.45",
+      "n_trades": 299,
+      "win_rate": "93.0%",
+      "avg_return": "+21.44%",
+      "excess": "+20.65%",
+      "sharpe": 14.87,
+      "max_return": "+220.00%",
+      "min_return": "-29.69%"
+    },
+    {
+      "label": "Fixed>=0.50",
+      "params": "threshold=0.5",
+      "n_trades": 216,
+      "win_rate": "93.1%",
+      "avg_return": "+22.13%",
+      "excess": "+21.34%",
+      "sharpe": 14.29,
+      "max_return": "+220.00%",
+      "min_return": "-29.69%"
+    }
+  ],
+  "adaptive_top_n": [
+    {
+      "label": "Top5",
+      "params": "top_n=5",
+      "n_trades": 280,
+      "win_rate": "79.6%",
+      "avg_return": "+18.42%",
+      "excess": "+17.63%",
+      "sharpe": 10.13,
+      "max_return": "+220.00%",
+      "min_return": "-36.93%"
+    },
+    {
+      "label": "Top10",
+      "params": "top_n=10",
+      "n_trades": 560,
+      "win_rate": "75.2%",
+      "avg_return": "+15.17%",
+      "excess": "+14.38%",
+      "sharpe": 9.68,
+      "max_return": "+220.00%",
+      "min_return": "-52.75%"
+    },
+    {
+      "label": "Top15",
+      "params": "top_n=15",
+      "n_trades": 840,
+      "win_rate": "71.4%",
+      "avg_return": "+12.86%",
+      "excess": "+12.07%",
+      "sharpe": 8.83,
+      "max_return": "+220.00%",
+      "min_return": "-52.75%"
+    },
+    {
+      "label": "Top20",
+      "params": "top_n=20",
+      "n_trades": 1120,
+      "win_rate": "70.4%",
+      "avg_return": "+11.51%",
+      "excess": "+10.72%",
+      "sharpe": 8.37,
+      "max_return": "+220.00%",
+      "min_return": "-52.75%"
+    },
+    {
+      "label": "Top30",
+      "params": "top_n=30",
+      "n_trades": 1680,
+      "win_rate": "68.3%",
+      "avg_return": "+10.45%",
+      "excess": "+9.66%",
+      "sharpe": 7.96,
+      "max_return": "+220.00%",
+      "min_return": "-52.75%"
+    },
+    {
+      "label": "Top50",
+      "params": "top_n=50",
+      "n_trades": 2800,
+      "win_rate": "62.7%",
+      "avg_return": "+7.92%",
+      "excess": "+7.13%",
+      "sharpe": 6.24,
+      "max_return": "+220.00%",
+      "min_return": "-52.75%"
+    }
+  ],
+  "adaptive_top_pct": [
+    {
+      "label": "Top5%",
+      "params": "top_pct=0.05",
+      "n_trades": 1059,
+      "win_rate": "70.3%",
+      "avg_return": "+11.65%",
+      "excess": "+10.86%",
+      "sharpe": 8.38,
+      "max_return": "+220.00%",
+      "min_return": "-52.75%"
+    },
+    {
+      "label": "Top10%",
+      "params": "top_pct=0.1",
+      "n_trades": 2092,
+      "win_rate": "65.5%",
+      "avg_return": "+9.12%",
+      "excess": "+8.33%",
+      "sharpe": 7.15,
+      "max_return": "+220.00%",
+      "min_return": "-52.75%"
+    },
+    {
+      "label": "Top15%",
+      "params": "top_pct=0.15",
+      "n_trades": 3121,
+      "win_rate": "61.6%",
+      "avg_return": "+7.45%",
+      "excess": "+6.66%",
+      "sharpe": 5.97,
+      "max_return": "+220.00%",
+      "min_return": "-52.75%"
+    },
+    {
+      "label": "Top20%",
+      "params": "top_pct=0.2",
+      "n_trades": 4158,
+      "win_rate": "59.4%",
+      "avg_return": "+6.30%",
+      "excess": "+5.51%",
+      "sharpe": 5.25,
+      "max_return": "+220.00%",
+      "min_return": "-65.84%"
+    },
+    {
+      "label": "Top25%",
+      "params": "top_pct=0.25",
+      "n_trades": 5196,
+      "win_rate": "57.5%",
+      "avg_return": "+5.38%",
+      "excess": "+4.59%",
+      "sharpe": 4.65,
+      "max_return": "+220.00%",
+      "min_return": "-65.84%"
+    }
+  ],
+  "leaderboard": [
+    {
+      "rank": 1,
+      "category": "Fixed",
+      "label": "Fixed>=0.50",
+      "excess": "+21.34%",
+      "sharpe": 14.29,
+      "trades": 216
+    },
+    {
+      "rank": 2,
+      "category": "Fixed",
+      "label": "Fixed>=0.45",
+      "excess": "+20.65%",
+      "sharpe": 14.87,
+      "trades": 299
+    },
+    {
+      "rank": 3,
+      "category": "Fixed",
+      "label": "Fixed>=0.40",
+      "excess": "+18.76%",
+      "sharpe": 14.42,
+      "trades": 429
+    },
+    {
+      "rank": 4,
+      "category": "Fixed",
+      "label": "Fixed>=0.35",
+      "excess": "+17.96%",
+      "sharpe": 13.87,
+      "trades": 623
+    },
+    {
+      "rank": 5,
+      "category": "TopN",
+      "label": "Top5",
+      "excess": "+17.63%",
+      "sharpe": 10.13,
+      "trades": 280
+    },
+    {
+      "rank": 6,
+      "category": "Fixed",
+      "label": "Fixed>=0.30",
+      "excess": "+16.22%",
+      "sharpe": 12.07,
+      "trades": 1060
+    },
+    {
+      "rank": 7,
+      "category": "TopN",
+      "label": "Top10",
+      "excess": "+14.38%",
+      "sharpe": 9.68,
+      "trades": 560
+    },
+    {
+      "rank": 8,
+      "category": "Fixed",
+      "label": "Fixed>=0.25",
+      "excess": "+13.00%",
+      "sharpe": 10.88,
+      "trades": 2078
+    },
+    {
+      "rank": 9,
+      "category": "TopN",
+      "label": "Top15",
+      "excess": "+12.07%",
+      "sharpe": 8.83,
+      "trades": 840
+    },
+    {
+      "rank": 10,
+      "category": "TopPct",
+      "label": "Top5%",
+      "excess": "+10.86%",
+      "sharpe": 8.38,
+      "trades": 1059
+    },
+    {
+      "rank": 11,
+      "category": "TopN",
+      "label": "Top20",
+      "excess": "+10.72%",
+      "sharpe": 8.37,
+      "trades": 1120
+    },
+    {
+      "rank": 12,
+      "category": "TopN",
+      "label": "Top30",
+      "excess": "+9.66%",
+      "sharpe": 7.96,
+      "trades": 1680
+    },
+    {
+      "rank": 13,
+      "category": "TopPct",
+      "label": "Top10%",
+      "excess": "+8.33%",
+      "sharpe": 7.15,
+      "trades": 2092
+    },
+    {
+      "rank": 14,
+      "category": "Fixed",
+      "label": "Fixed>=0.20",
+      "excess": "+7.35%",
+      "sharpe": 6.94,
+      "trades": 5296
+    },
+    {
+      "rank": 15,
+      "category": "TopN",
+      "label": "Top50",
+      "excess": "+7.13%",
+      "sharpe": 6.24,
+      "trades": 2800
+    },
+    {
+      "rank": 16,
+      "category": "TopPct",
+      "label": "Top15%",
+      "excess": "+6.66%",
+      "sharpe": 5.97,
+      "trades": 3121
+    },
+    {
+      "rank": 17,
+      "category": "TopPct",
+      "label": "Top20%",
+      "excess": "+5.51%",
+      "sharpe": 5.25,
+      "trades": 4158
+    },
+    {
+      "rank": 18,
+      "category": "TopPct",
+      "label": "Top25%",
+      "excess": "+4.59%",
+      "sharpe": 4.65,
+      "trades": 5196
+    }
+  ]
+}

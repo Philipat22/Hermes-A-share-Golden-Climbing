@@ -1,0 +1,94 @@
+{
+  "title": "Phase 1c: A-Share Feature Integration",
+  "timestamp": "2026-05-01T22:11:22.432128",
+  "cn_features": [
+    "north_net_flow",
+    "north_flow_ma5",
+    "north_flow_ma10",
+    "north_flow_zscore",
+    "north_flow_ratio",
+    "retail_net_flow",
+    "net_flow_divergence",
+    "margin_balance",
+    "margin_change",
+    "margin_buy_intensity",
+    "margin_ma5",
+    "margin_trend",
+    "margin_buy_ma5",
+    "short_intensity",
+    "holder_num",
+    "holder_change",
+    "holder_concentration",
+    "holder_shrink_2q"
+  ],
+  "n_cn_features": 18,
+  "n_original_features": 40,
+  "results": [
+    {
+      "window": "2022 Bear",
+      "algo": "Baseline",
+      "auc": 0.5877,
+      "n_features": 40,
+      "test_n": 109592,
+      "best_th": 0.25,
+      "n_picks": "5624",
+      "excess": "+3.77%",
+      "wr": "54.6%"
+    },
+    {
+      "window": "2022 Bear",
+      "algo": "CN+Orig",
+      "auc": 0.5988,
+      "n_features": 58,
+      "test_n": 109592,
+      "best_th": 0.25,
+      "n_picks": "1241",
+      "excess": "+3.73%",
+      "wr": "49.2%"
+    },
+    {
+      "window": "2023 Sideways",
+      "algo": "Baseline",
+      "auc": 0.5867,
+      "n_features": 40,
+      "test_n": 115153,
+      "best_th": 0.3,
+      "n_picks": "394",
+      "excess": "+5.65%",
+      "wr": "50.0%"
+    },
+    {
+      "window": "2023 Sideways",
+      "algo": "CN+Orig",
+      "auc": 0.573,
+      "n_features": 58,
+      "test_n": 115153,
+      "best_th": 0.3,
+      "n_picks": "200",
+      "excess": "+4.71%",
+      "wr": "54.0%"
+    },
+    {
+      "window": "2024 Recovery",
+      "algo": "Baseline",
+      "auc": 0.5704,
+      "n_features": 40,
+      "test_n": 117399,
+      "best_th": 0.35,
+      "n_picks": "388",
+      "excess": "+19.12%",
+      "wr": "90.2%"
+    },
+    {
+      "window": "2024 Recovery",
+      "algo": "CN+Orig",
+      "auc": 0.5621,
+      "n_features": 58,
+      "test_n": 117399,
+      "best_th": 0.55,
+      "n_picks": "120",
+      "excess": "+19.39%",
+      "wr": "85.0%"
+    }
+  ]
+}

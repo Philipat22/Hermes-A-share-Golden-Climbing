@@ -1,0 +1,81 @@
+{
+  "rankings": [
+    {
+      "rank": 1,
+      "config": "5d_10%",
+      "avg_auc": 0.6861,
+      "avg_excess": 26.97,
+      "total_picks": 130
+    },
+    {
+      "rank": 2,
+      "config": "5d_7%",
+      "avg_auc": 0.6576,
+      "avg_excess": 25.89,
+      "total_picks": 62
+    },
+    {
+      "rank": 3,
+      "config": "10d_15%",
+      "avg_auc": 0.6541,
+      "avg_excess": 42.52,
+      "total_picks": 199
+    },
+    {
+      "rank": 4,
+      "config": "10d_10%",
+      "avg_auc": 0.6319,
+      "avg_excess": 21.36,
+      "total_picks": 518
+    },
+    {
+      "rank": 5,
+      "config": "5d_5%",
+      "avg_auc": 0.631,
+      "avg_excess": 22.06,
+      "total_picks": 408
+    },
+    {
+      "rank": 6,
+      "config": "10d_7%",
+      "avg_auc": 0.6104,
+      "avg_excess": 14.31,
+      "total_picks": 1223
+    },
+    {
+      "rank": 7,
+      "config": "5d_3%",
+      "avg_auc": 0.6,
+      "avg_excess": 12.09,
+      "total_picks": 1755
+    },
+    {
+      "rank": 8,
+      "config": "20d_15%",
+      "avg_auc": 0.5972,
+      "avg_excess": 17.22,
+      "total_picks": 777
+    },
+    {
+      "rank": 9,
+      "config": "10d_5%",
+      "avg_auc": 0.5934,
+      "avg_excess": 11.03,
+      "total_picks": 1620
+    },
+    {
+      "rank": 10,
+      "config": "20d_10%",
+      "avg_auc": 0.582,
+      "avg_excess": 12.28,
+      "total_picks": 2083
+    },
+    {
+      "rank": 11,
+      "config": "20d_7%",
+      "avg_auc": 0.5696,
+      "avg_excess": 12.05,
+      "total_picks": 1405
+    }
+  ]
+}

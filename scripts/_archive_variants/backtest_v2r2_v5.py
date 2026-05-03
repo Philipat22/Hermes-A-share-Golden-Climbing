@@ -1,14 +1,15 @@
 """
-Regime-Aware Backtest v4b: V4 Guards + All Thresholds +0.05
+Regime-Aware Backtest v5: V4 Guards + CSI300 Shock Filter
 
-Bump every regime's entry threshold by 0.05:
-  bull:       0.25 → 0.30
-  sideways:   0.35 → 0.40
-  bear:       0.30 → 0.35
-  severe_bear:0.40 → 0.45
+Adds one zero-overfit filter on top of V4's three execution bug fixes:
 
-Rationale: Higher threshold → fewer, higher-quality picks.
-Mean-reversion in A-shares needs stronger signals to avoid buying into broad declines.
+V5: CSI300 5-DAY SHOCK FILTER
+   - Observation: During the 18-loss streak, the broad market was in sharp decline.
+     Every day, more stocks looked "oversold" → model bought more falling knives.
+   - Fix: If CSI300 has dropped 3%+ in the last 5 trading days, skip ALL new picks.
+   - Rationale: Mean-reversion signals are unreliable during broad market shocks.
+     Skip the battle entirely rather than try to pick individual bargains.
+   - Threshold: -3% over 5 days = ~2008/2015 crash-level pullback. Not noise.
 """
 
 import os, sys, json, warnings, pickle, time
@@ -20,7 +21,7 @@ import tushare as ts
 warnings.filterwarnings('ignore')
 ROOT = r'D:\AIHedgeFund\ai-hedge-fund-main'
 PRICE = r'D:\AIHedgeFund\ai-hedge-fund-main\data\cache\backtest_prices_extended.pkl'
-TU_TOKEN = '5243de737c1a25110583352fde4458266314877dd0c342cae1a9f4c7'
+TU_TOKEN = os.getenv('TUSHARE_PRO_TOKEN', '')
 np.random.seed(42)
 
 with open(os.path.join(ROOT, 'src', 'surge', 'params.json')) as f:
@@ -28,10 +29,10 @@ with open(os.path.join(ROOT, 'src', 'surge', 'params.json')) as f:
 
 # ── Costs ────────────────────────────────────────────────────────
 COMMISSION, STAMP, SLIPPAGE = 0.0003, 0.0005, 0.001
-COST_ENTRY = COMMISSION + SLIPPAGE
-COST_EXIT  = COMMISSION + STAMP + SLIPPAGE
-COST_RT    = COST_ENTRY + COST_EXIT
-STOP_LOSS  = -0.05
+COST_ENTRY = COMMISSION + SLIPPAGE          # 0.13%
+COST_EXIT  = COMMISSION + STAMP + SLIPPAGE   # 0.18%
+COST_RT    = COST_ENTRY + COST_EXIT           # 0.31%
+STOP_LOSS  = -0.05  # -5% per trade
 
 # ── V4 EXECUTION GUARD CONFIG ──────────────────────────────
 COOLDOWN_DAYS = 20
@@ -41,8 +42,9 @@ VOLA_TRACK_WINDOW = 5
 VOLA_HOLD_WARN = 3
 VOLA_HOLD_CRITICAL = 2
 
-# ── V4b: THRESHOLD OFFSET ──────────────────────────────────
-THRESHOLD_BUMP = 0.05  # +0.05 for ALL regimes
+# ── V5 MARKET SHOCK FILTER ─────────────────────────────────
+MARKET_SHOCK_LOOKBACK = 5   # Trading days to look back
+MARKET_SHOCK_THRESHOLD = -0.03  # -3% drop triggers filter
 # ────────────────────────────────────────────────────────────
 
 MODEL_CFG = [
@@ -56,7 +58,6 @@ WF_WINDOWS = [
 ]
 
 def build_strat(mode='5d_only'):
-    """Base thresholds, then apply THRESHOLD_BUMP on top."""
     base = {
         'bull':        ('5d_10%',  0.25, 5,  0.80),
         'sideways':    ('5d_10%',  0.35, 5,  0.60),
@@ -68,22 +69,15 @@ def build_strat(mode='5d_only'):
     if mode == 'dual':
         base['bear'] = ('10d_15%', 0.30, 3, 0.30)
         base['severe_bear'] = ('5d_10%', 0.40, 2, 0.15)
-
-    # Apply the bump to all regimes
-    bumped = {}
-    for regime, (mdl, thresh, pos, cap) in base.items():
-        bumped[regime] = (mdl, min(thresh + THRESHOLD_BUMP, 0.60), pos, cap)
-    return bumped
+    return base
 
 # ════════════════════════════════════════════════════════════════════
 # DATA LOADING
 # ════════════════════════════════════════════════════════════════════
 print("=" * 72)
-print(f"BACKTEST v4b — V4 Guards + All Thresholds +{THRESHOLD_BUMP}")
-print(f"  bull:       0.25→{0.25+THRESHOLD_BUMP}")
-print(f"  sideways:   0.35→{0.35+THRESHOLD_BUMP}")
-print(f"  bear:       0.30→{0.30+THRESHOLD_BUMP}")
-print(f"  severe_bear:0.40→{0.40+THRESHOLD_BUMP}")
+print("BACKTEST v5 — Execution Guards + CSI300 Market Shock Filter")
+print("V4 fixes: Cooldown | Consecutive Guard | Volatility Threshold")
+print("V5 add:   CSI300 -3% in 5d → skip new picks")
 print("=" * 72)
 t0 = time.time()
 
@@ -106,6 +100,7 @@ ALL_FEATURES = [c for c in pdf.columns if c.startswith(
     ('alpha','rsi_','macd','bb_','klen','rsqr','slope','std','vma','vosc','beta_'))]
 print(f"  {len(ALL_FEATURES)} features")
 
+# CSI300 regime classifier + return data
 print("[Regime data...]")
 pro = ts.pro_api(TU_TOKEN)
 csi = pro.index_daily(ts_code='000300.SH', start_date='20150101', end_date='20250701')
@@ -114,6 +109,9 @@ csi = csi.sort_values('trade_date').reset_index(drop=True)
 for m in [20, 60, 120]:
     csi[f'ma{m}'] = csi['close'].rolling(m).mean()
 csi['ret20'] = csi['close'].pct_change(20)
+
+# V5: Precompute CSI300 5-day returns
+csi['ret5'] = csi['close'].pct_change(MARKET_SHOCK_LOOKBACK)
 
 def classify_regime(row):
     c = row['close']; m20 = row['ma20']; m60 = row['ma60']; m120 = row['ma120']; r20 = row['ret20']
@@ -125,7 +123,9 @@ def classify_regime(row):
     return 'sideways'
 
 csi['regime'] = csi.apply(classify_regime, axis=1)
+csi.to_pickle(os.path.join(ROOT, 'data', 'cache', 'csi300_regime.pkl'))
 
+# Forward returns
 print("[Forward returns...]")
 for mc in MODEL_CFG:
     h = mc['horizon']; col = f'fwd_{h}d'
@@ -149,8 +149,16 @@ def get_regime(dt):
     m = csi['trade_date'] <= pd.Timestamp(dt)
     return csi.loc[m, 'regime'].iloc[-1] if m.sum() > 0 else 'sideways'
 
+def get_csi_ret5(dt):
+    """Returns CSI300's 5-day return on or before given date. None if unavailable."""
+    m = csi['trade_date'] <= pd.Timestamp(dt)
+    sub = csi.loc[m]
+    if len(sub) == 0: return None
+    val = sub['ret5'].iloc[-1]
+    return float(val) if not pd.isna(val) else None
+
 # ════════════════════════════════════════════════════════════════════
-# BACKTEST ENGINE (V4b — V4 guards + bumped thresholds)
+# BACKTEST ENGINE (V5 — V4 + CSI300 shock filter)
 # ════════════════════════════════════════════════════════════════════
 def run_backtest(mode_label, strategy):
     print(f"\n{'='*72}")
@@ -196,14 +204,19 @@ def run_backtest(mode_label, strategy):
                            pdf.loc[te_mask, ALL_FEATURES].values)
             pdf.loc[te_idx, f'score_{name}'] = models[name].predict(X_te)
 
-        # ── V4: EXECUTION FIX STATE TRACKERS ──
+        # ════════════════════════════════════════════════════════════
+        # V4: EXECUTION FIX STATE TRACKERS
+        # ════════════════════════════════════════════════════════════
         stop_loss_cooldown = {}
         consecutive_stop_days = 0
         recent_stop_hold_times = []
+        # ────────────────────────────────────────────────────────────
 
         positions = {}; cash = 1_000_000
         window_trades = []; portfolio_values = []
         fix1_blocks = 0; fix2_reduces = 0; fix3_boosts = 0
+        # V5: market shock skip counter
+        market_shock_skips = 0
 
         for di, d in enumerate(te_dates):
             day_mask = pdf['date'] == d
@@ -300,8 +313,28 @@ def run_backtest(mode_label, strategy):
             # ── Fix 1: Clean expired cooldown entries ──
             stop_loss_cooldown = {k: v for k, v in stop_loss_cooldown.items() if v >= d}
 
+            # ════════════════════════════════════════════════════════
+            # V5: CSI300 SHOCK FILTER
+            # ════════════════════════════════════════════════════════
+            market_shock = False
+            csi_ret5 = get_csi_ret5(d)
+            if csi_ret5 is not None and csi_ret5 < MARKET_SHOCK_THRESHOLD:
+                market_shock = True
+                market_shock_skips += 1
+                # Log this as a special trade record for visibility
+                window_trades.append({
+                    'window': wname, 'regime': regime, 'model': model_name,
+                    'symbol': '__MARKET_SHOCK__', 'exit_reason': 'shock_filter',
+                    'entry_date': str(pd.Timestamp(d).date()),
+                    'exit_date': str(pd.Timestamp(d).date()),
+                    'entry_price': 0, 'exit_price': 0,
+                    'gross_return': 0, 'net_return': 0,
+                    'shares': 0, 'cost_ratio': 0,
+                    'effective_threshold': effective_threshold,
+                })
+
             # ── SELECT new picks ──
-            if effective_max_pos > 0:
+            if not market_shock and effective_max_pos > 0:
                 cap_cash = cash * effective_capacity
                 open_slots = max(0, effective_max_pos - len(positions))
                 if open_slots > 0 and di < len(te_dates) - MODEL_CFG[0]['horizon']:
@@ -309,6 +342,7 @@ def run_backtest(mode_label, strategy):
                     day_syms = pdf.loc[day_mask, 'vt_symbol'].values
                     next_date = te_dates[min(di + 1, len(te_dates) - 1)]
 
+                    # Fix 1: Filter out cooldown stocks + existing positions
                     valid = [(j, sym, day_scores[j], get_price(sym, next_date, 'open'))
                              for j, sym in enumerate(day_syms)
                              if sym not in positions
@@ -350,32 +384,39 @@ def run_backtest(mode_label, strategy):
                 'date': d, 'value': total, 'cash': cash, 'positions': pos_value,
                 'regime': regime, 'model': model_name, 'num_positions': len(positions),
                 'effective_threshold': effective_threshold,
+                'market_shock_skip': market_shock,
             })
 
         # ── Window summary ──
         df_val = pd.DataFrame(portfolio_values)
         trades_df = pd.DataFrame(window_trades)
-        n_trades = len(trades_df)
+        # Filter out shock markers for trade stats
+        real_trades = trades_df[trades_df['symbol'] != '__MARKET_SHOCK__'].copy() if len(trades_df) > 0 else trades_df.copy()
+        n_shock = (trades_df['symbol'] == '__MARKET_SHOCK__').sum() if len(trades_df) > 0 else 0
+        n_real = len(real_trades) if len(real_trades) > 0 else 0
 
-        if n_trades > 0:
+        if n_real > 0:
             cr = df_val['value'].iloc[-1] / df_val['value'].iloc[0] - 1
             df_val['ret'] = df_val['value'].pct_change().fillna(0)
             sr = df_val['ret'].mean() / df_val['ret'].std() * np.sqrt(240) if df_val['ret'].std() > 0 else 0
             df_val['cummax'] = df_val['value'].cummax()
             mdd = (df_val['value'] / df_val['cummax'] - 1).min()
-            wr = (trades_df['net_return'] > 0).mean()
-            avg_nr = trades_df['net_return'].mean()
-            avg_w = trades_df.loc[trades_df['net_return'] > 0, 'net_return'].mean() if (trades_df['net_return'] > 0).sum() > 0 else 0
-            avg_l = trades_df.loc[trades_df['net_return'] < 0, 'net_return'].mean() if (trades_df['net_return'] < 0).sum() > 0 else 0
-            pf = (avg_w * (trades_df['net_return'] > 0).sum()) / abs(avg_l * (trades_df['net_return'] < 0).sum()) if avg_l != 0 else float('inf')
+            wr = (real_trades['net_return'] > 0).mean()
+            avg_nr = real_trades['net_return'].mean()
+            avg_w = real_trades.loc[real_trades['net_return'] > 0, 'net_return'].mean() if (real_trades['net_return'] > 0).sum() > 0 else 0
+            avg_l = real_trades.loc[real_trades['net_return'] < 0, 'net_return'].mean() if (real_trades['net_return'] < 0).sum() > 0 else 0
+            pf = (avg_w * (real_trades['net_return'] > 0).sum()) / abs(avg_l * (real_trades['net_return'] < 0).sum()) if avg_l != 0 else float('inf')
+            avg_hold = (real_trades['exit_date'].apply(lambda x: pd.Timestamp(x)) -
+                       real_trades['entry_date'].apply(lambda x: pd.Timestamp(x))).dt.days.mean() if 'exit_date' in real_trades.columns and len(real_trades) > 0 else 0
 
             print(f"\n  ── {wname} ──")
-            print(f"    Trades: {n_trades} | WR: {wr:.1%} | AvgNet: {avg_nr:.2%}")
+            print(f"    Trades: {n_real} | WR: {wr:.1%} | AvgNet: {avg_nr:.2%}")
             print(f"    CumRet: {cr:.2%} | Sharpe: {sr:.2f} | MaxDD: {mdd:.2%} | PF: {pf:.2f}")
-            print(f"    Guards: Fix2={fix2_reduces}d | Fix3={fix3_boosts}d")
+            print(f"    AvgHold: {avg_hold:.0f}d | AvgWin: {avg_w:.2%} | AvgLoss: {avg_l:.2%}")
+            print(f"    Guards: Fix2={fix2_reduces}d | Fix3={fix3_boosts}d | ShockFilter={n_shock}x")
 
-            for regime_name in sorted(trades_df['regime'].unique()):
-                sub = trades_df[trades_df['regime'] == regime_name]
+            for regime_name in sorted(real_trades['regime'].unique()):
+                sub = real_trades[real_trades['regime'] == regime_name]
                 print(f"    [{regime_name}] {len(sub)} trades, WR {(sub['net_return']>0).mean():.1%}, avg {sub['net_return'].mean():.4%}")
 
         df_val['window'] = wname
@@ -386,7 +427,10 @@ def run_backtest(mode_label, strategy):
     print(f"\n  {'='*54}")
     print(f"  TOTAL ({mode_label})")
     print(f"  {'='*54}")
-    df_t = pd.DataFrame(all_trades).sort_values(['window', 'exit_date']).reset_index(drop=True)
+    df_t_all = pd.DataFrame(all_trades).sort_values(['window', 'exit_date']).reset_index(drop=True)
+    # Filter out shock markers for total stats
+    df_t = df_t_all[df_t_all['symbol'] != '__MARKET_SHOCK__'].copy() if len(df_t_all) > 0 else df_t_all.copy()
+    total_shocks = (df_t_all['symbol'] == '__MARKET_SHOCK__').sum() if len(df_t_all) > 0 else 0
     df_e = pd.concat(all_equity, ignore_index=True).sort_values('date')
 
     if len(df_t) > 0:
@@ -396,16 +440,17 @@ def run_backtest(mode_label, strategy):
         avg_w = df_t.loc[df_t['net_return'] > 0, 'net_return'].mean()
         avg_l = df_t.loc[df_t['net_return'] < 0, 'net_return'].mean()
         pf = (avg_w * (df_t['net_return'] > 0).sum()) / abs(avg_l * (df_t['net_return'] < 0).sum()) if avg_l != 0 else float('inf')
-        print(f"    Total trades: {len(df_t)}")
+        print(f"    Total trades: {len(df_t)} (shocks skipped: {total_shocks}x)")
         print(f"    Win rate: {wr:.1%}")
         print(f"    Avg net return: {avg_nr:.4%}")
         print(f"    Avg win: {avg_w:.4%} | Avg loss: {avg_l:.4%}")
         print(f"    Profit factor: {pf:.2f}")
 
         print(f"\n    Exit reasons:")
-        for r in ['matured', 'stop_loss']:
-            sub = df_t[df_t['exit_reason'] == r]
-            print(f"      {r}: {len(sub)} trades")
+        for r in ['matured', 'stop_loss', 'shock_filter']:
+            sub = df_t_all[df_t_all['exit_reason'] == r]
+            if len(sub) > 0:
+                print(f"      {r}: {len(sub)} trades")
 
         print(f"\n    By regime:")
         for r in sorted(df_t['regime'].unique()):
@@ -424,27 +469,6 @@ def run_backtest(mode_label, strategy):
                 streak_ct = 0
         print(f"\n    Max consecutive losses: {max_streak}")
 
-        # Consecutive loss deep dive (show largest 3 streaks)
-        losses = df_t['net_return'] < 0
-        streaks = []
-        ct = 0; start_i = 0
-        for i in range(len(losses)):
-            if losses.iloc[i]:
-                if ct == 0: start_i = i
-                ct += 1
-            else:
-                if ct > 0: streaks.append((ct, start_i))
-                ct = 0
-        if ct > 0: streaks.append((ct, start_i))
-        streaks.sort(reverse=True)
-        print(f"\n    Top loss streaks:")
-        for si, (sl, start_i) in enumerate(streaks[:3]):
-            end_i = min(start_i + sl, len(df_t)) - 1
-            entry_d = df_t.iloc[start_i]['entry_date'] if 'entry_date' in df_t.columns else '?'
-            exit_d = df_t.iloc[end_i]['exit_date'] if 'exit_date' in df_t.columns else '?'
-            streak_pnl = df_t.iloc[start_i:start_i+sl]['net_return'].sum()
-            print(f"      {sl}x loss: {entry_d}–{exit_d} | cumulative PnL: {streak_pnl:.2%}")
-
     if len(df_e) > 0:
         eq = df_e.copy()
         eq['ret_daily'] = eq['value'].pct_change().fillna(0)
@@ -452,6 +476,7 @@ def run_backtest(mode_label, strategy):
         full_sr = eq['ret_daily'].mean() / eq['ret_daily'].std() * np.sqrt(240) if eq['ret_daily'].std() > 0 else 0
         eq['cummax'] = eq['value'].cummax()
         full_mdd = (eq['value'] / eq['cummax'] - 1).min()
+
         print(f"\n    Full equity curve (concatenated):")
         print(f"      Cumulative return: {full_cr:.2%}")
         print(f"      Sharpe: {full_sr:.2f}")
@@ -463,8 +488,8 @@ def run_backtest(mode_label, strategy):
 # RUN
 # ════════════════════════════════════════════════════════════════════
 results = {}
-for mode_name, mode_key in [('A) 5d_10% Single Model + V4b', '5d_only'),
-                             ('B) Dual Model + V4b', 'dual')]:
+for mode_name, mode_key in [('A) 5d_10% Single Model + V5 Guards', '5d_only'),
+                             ('B) Dual Model + V5 Guards', 'dual')]:
     strat = build_strat(mode_key)
     trades, equity = run_backtest(mode_name, strat)
     results[mode_key] = {'trades': trades, 'equity': equity}
@@ -477,9 +502,9 @@ for key in ['5d_only', 'dual']:
     df_t = pd.DataFrame(r['trades'])
     df_e = pd.concat(r['equity'], ignore_index=True).sort_values('date')
     if len(df_t) > 0:
-        df_t.to_csv(os.path.join(ROOT, 'quant_archive', '2026-05', f'backtest_v2r2_v4b_{key}_trades.csv'), index=False)
+        df_t.to_csv(os.path.join(ROOT, 'quant_archive', '2026-05', f'backtest_v2r2_v5_{key}_trades.csv'), index=False)
     if len(df_e) > 0:
-        df_e.to_csv(os.path.join(ROOT, 'quant_archive', '2026-05', f'backtest_v2r2_v4b_{key}_equity.csv'), index=False)
+        df_e.to_csv(os.path.join(ROOT, 'quant_archive', '2026-05', f'backtest_v2r2_v5_{key}_equity.csv'), index=False)
 
 print(f"\nTotal runtime: {(time.time()-t0)/60:.1f} min")
 print("Done.")

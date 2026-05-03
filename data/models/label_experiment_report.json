@@ -1,0 +1,20 @@
+{
+  "binary": {
+    "excess": 0.146,
+    "win": 0.215,
+    "threshold": 0.3,
+    "n_picks": 163
+  },
+  "rank": {
+    "excess": 0.1042,
+    "win": 0.23,
+    "threshold": 0.3,
+    "n_picks": 440
+  },
+  "regression": {
+    "excess": 0.0471,
+    "win": 0.199,
+    "threshold": 0.027937964003693447,
+    "n_picks": 772
+  }
+}

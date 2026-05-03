@@ -1,0 +1,14 @@
+{
+  "title": "Phase 1b: Multi-Model vs Single Model",
+  "timestamp": "2026-05-01T21:57:57.306296",
+  "features": 40,
+  "results": [
+    {
+      "window": "2022 Bear",
+      "test_n": 90048,
+      "market_avg": "+0.17%",
+      "single_auc": 0.5727,
+      "multi_auc": 0.5138,
+      "auc_delta": "-5.89%",
+      "single_best_th": 0.35,
+      "single_n": 

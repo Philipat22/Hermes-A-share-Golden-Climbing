@@ -1,15 +1,13 @@
 """
-Regime-Aware Backtest v2: Risk Controls Edition
+Backtest v3 — Drawdown Optimization Edition
 
-Runs TWO configurations sequentially:
-  A) Single model (5d_10%) across all non-recovery regimes
-  B) Dual model switching (5d_10% / 10d_15%) across regimes
+Adds to v2:
+  1. SIDEWAYS capacity reduced: 60% → 30%, max_pos 5 → 3
+  2. Circuit breaker: 3 consecutive losses → 2-day trading halt
+  3. Repeat-loser filter: don't re-buy stocks stopped out <20 trading days ago
+  4. Confident-only mode in SIDEWAYS: only buy top-20% of scores
 
-Both include:
-  - No trading during recovery (best to sit out)
-  - Hard stop-loss at -5% per trade
-  - Regime-dependent position sizing
-  - Full A-share transaction costs (0.31% round-trip)
+Everything else (costs, models, walk-forward windows) identical to v2.
 """
 import os, sys, json, warnings, pickle, time
 sys.stdout.reconfigure(line_buffering=True)
@@ -20,7 +18,7 @@ import tushare as ts
 warnings.filterwarnings('ignore')
 ROOT = r'D:\AIHedgeFund\ai-hedge-fund-main'
 PRICE = r'D:\AIHedgeFund\ai-hedge-fund-main\data\cache\backtest_prices_extended.pkl'
-TU_TOKEN = '5243de737c1a25110583352fde4458266314877dd0c342cae1a9f4c7'
+TU_TOKEN = os.getenv('TUSHARE_PRO_TOKEN', '')
 np.random.seed(42)
 
 with open(os.path.join(ROOT, 'src', 'surge', 'params.json')) as f:
@@ -31,7 +29,15 @@ COMMISSION, STAMP, SLIPPAGE = 0.0003, 0.0005, 0.001
 COST_ENTRY = COMMISSION + SLIPPAGE          # 0.13%
 COST_EXIT  = COMMISSION + STAMP + SLIPPAGE   # 0.18%
 COST_RT    = COST_ENTRY + COST_EXIT           # 0.31%
-STOP_LOSS  = -0.05  # -5% per trade
+STOP_LOSS  = -0.05
+
+# ── Drawdown protection constants ────────────────────────────────
+MAX_CONSECUTIVE_LOSSES = 3          # trigger after N consecutive losses
+COOLDOWN_DAYS = 2                   # halt trading for N days
+REPEAT_LOSER_BAN_DAYS = 20          # don't re-buy for N trading days
+SIDEWAYS_SCORE_PCTILE = 0.20        # in sideways, only buy top 20% of scores
+SIDEWAYS_CAPACITY = 0.30            # was 0.60
+SIDEWAYS_MAX_POS = 3                # was 5
 
 # ── Model configs ────────────────────────────────────────────────
 MODEL_CFG = [
@@ -41,23 +47,21 @@ MODEL_CFG = [
 WF_WINDOWS = [
     ('2019-01-01', '2022-01-01', '2022-01-01', '2023-01-01', '2022 Bear'),
     ('2019-01-01', '2023-01-01', '2023-01-01', '2024-01-01', '2023 Sideways'),
-    ('2019-01-01', '2024-01-01', '2024-01-01', '2025-01-01', '2024 Bull'),
-    ('2019-01-01', '2025-01-01', '2025-01-01', '2026-04-30', '2025-2026'),
+    ('2019-01-01', '2024-01-01', '2024-01-01', '2025-07-01', '2024-2025'),
 ]
 
 # ── Strategy configs ─────────────────────────────────────────────
 def build_strat(mode='5d_only'):
-    """Return dict: regime → (model_name, threshold, max_positions, capacity_pct)."""
+    """Regime → (model_name, threshold, max_positions, capacity_pct)."""
     base = {
         'bull':        ('5d_10%',  0.25, 5,  0.80),
-        'sideways':    ('5d_10%',  0.35, 5,  0.60),
+        'sideways':    ('5d_10%',  0.25, SIDEWAYS_MAX_POS, SIDEWAYS_CAPACITY),
         'bear':        ('5d_10%',  0.30, 3,  0.30),
         'severe_bear': ('5d_10%',  0.40, 2,  0.15),
-        'recovery':    ('5d_10%',  0.40, 0,  0.00),  # no trading
+        'recovery':    ('5d_10%',  0.40, 0,  0.00),
         'unknown':     ('5d_10%',  0.25, 3,  0.50),
     }
     if mode == 'dual':
-        # Dual model: use 10d_15% in bear, 5d_10% elsewhere
         base['bear'] = ('10d_15%', 0.30, 3, 0.30)
         base['severe_bear'] = ('5d_10%', 0.40, 2, 0.15)
     return base
@@ -66,11 +70,11 @@ def build_strat(mode='5d_only'):
 # LOAD DATA
 # ════════════════════════════════════════════════════════════════════
 print("=" * 72)
-print("REGIME-AWARE BACKTEST v2 — Risk Controls Edition")
+print("BACKTEST v3 — Drawdown Optimization Edition")
 print("=" * 72)
 t0 = time.time()
 
-print("\n[Loading data...]")
+print("[Loading factors...]")
 FACTOR_DIR = os.path.join(ROOT, 'data', 'cache', 'factors_batched')
 dfs = []
 for fn in sorted(os.listdir(FACTOR_DIR)):
@@ -79,18 +83,19 @@ for fn in sorted(os.listdir(FACTOR_DIR)):
 pdf = pd.concat(dfs, ignore_index=True)
 pdf['date'] = pd.to_datetime(pdf['datetime'])
 pdf = pdf.sort_values(['vt_symbol', 'date']).reset_index(drop=True)
-print(f"  Factors: {len(pdf):,} rows, {pdf['vt_symbol'].nunique()} stocks")
+print(f"  {len(pdf):,} rows, {pdf['vt_symbol'].nunique()} stocks")
 
 price_dict = pd.read_pickle(PRICE)
-print(f"  Prices: {len(price_dict)} stocks")
+print(f"  {len(price_dict)} stocks in price dict")
 
-ALL_FEATURES = [c for c in pdf.columns if c.startswith(('alpha','rsi_','macd','bb_','klen','rsqr','slope','std','vma','vosc','beta_'))]
+ALL_FEATURES = [c for c in pdf.columns if c.startswith(
+    ('alpha','rsi_','macd','bb_','klen','rsqr','slope','std','vma','vosc','beta_'))]
 print(f"  {len(ALL_FEATURES)} features")
 
-# CSI300 regime data
-print("\n[Fetching CSI300 regime data...]")
+# CSI300 regime
+print("[Computing CSI300 regimes...]")
 pro = ts.pro_api(TU_TOKEN)
-csi = pro.index_daily(ts_code='000300.SH', start_date='20150101', end_date='20260430')
+csi = pro.index_daily(ts_code='000300.SH', start_date='20150101', end_date='20250701')
 csi['trade_date'] = pd.to_datetime(csi['trade_date'])
 csi = csi.sort_values('trade_date').reset_index(drop=True)
 for m in [20, 60, 120]:
@@ -121,7 +126,7 @@ for mc in MODEL_CFG:
             pdf.loc[idx, col] = fwd
 
 # ════════════════════════════════════════════════════════════════════
-# BACKTEST ENGINE
+# HELPERS
 # ════════════════════════════════════════════════════════════════════
 def get_price(sym, dt, field='close'):
     if sym not in price_dict: return None
@@ -133,11 +138,18 @@ def get_regime(dt):
     m = csi['trade_date'] <= pd.Timestamp(dt)
     return csi.loc[m, 'regime'].iloc[-1] if m.sum() > 0 else 'sideways'
 
+# ════════════════════════════════════════════════════════════════════
+# BACKTEST ENGINE (v3 with drawdown protection)
+# ════════════════════════════════════════════════════════════════════
 def run_backtest(mode_label, strategy):
-    """Run full Walk-Forward backtest for one strategy config."""
     print(f"\n{'='*72}")
     print(f"  MODE: {mode_label}")
+    print(f"  Protections: circuit_breaker({MAX_CONSECUTIVE_LOSSES}loss→{COOLDOWN_DAYS}d)"
+          f" | repeat_loser_ban({REPEAT_LOSER_BAN_DAYS}d)"
+          f" | sideways_top{(1-SIDEWAYS_SCORE_PCTILE)*100:.0f}%"
+          f" | sideways_cap{SIDEWAYS_CAPACITY:.0%}")
     print(f"{'='*72}")
+
     all_trades = []; all_equity = []
 
     for wi, (tr_s, tr_e, te_s, te_e, wname) in enumerate(WF_WINDOWS):
@@ -145,7 +157,7 @@ def run_backtest(mode_label, strategy):
         te_mask = (pdf['date'] >= te_s) & (pdf['date'] < te_e)
         te_dates = sorted(pdf.loc[te_mask, 'date'].unique())
 
-        # ── Train both models ──
+        # ── Train models ──
         models = {}
         for mc in MODEL_CFG:
             name = mc['name']; h = mc['horizon']; t = mc['thresh']
@@ -168,11 +180,10 @@ def run_backtest(mode_label, strategy):
             w_model = lgb.train(
                 LGB_PARAMS, lgb.Dataset(X_tr, y_tr),
                 valid_sets=[lgb.Dataset(X_vl, y_vl, reference=lgb.Dataset(X_tr, y_tr))],
-                callbacks=[lgb.early_stopping(30), lgb.log_evaluation(0)]
-            )
+                callbacks=[lgb.early_stopping(30), lgb.log_evaluation(0)])
             models[name] = w_model
 
-        # ── Score all test data ──
+        # ── Score test data ──
         te_idx = pdf.loc[te_mask].index
         for mc in MODEL_CFG:
             name = mc['name']
@@ -180,24 +191,32 @@ def run_backtest(mode_label, strategy):
                            pdf.loc[te_mask, ALL_FEATURES].values)
             pdf.loc[te_idx, f'score_{name}'] = models[name].predict(X_te)
 
-        # ── Trade simulation ──
+        # ── TRADE SIMULATION (v3 state tracking) ──
         positions = {}; cash = 1_000_000
         window_trades = []; portfolio_values = []
+        consecutive_losses = 0
+        cooldown_remaining = 0
+        # Track which stocks we've recently stopped out on (symbol → date)
+        recent_losers = {}  # {sym: stop_loss_date}
 
         for di, d in enumerate(te_dates):
             day_mask = pdf['date'] == d
             regime = get_regime(d)
             strat = strategy.get(regime, strategy['sideways'])
             model_name, threshold, max_pos, capacity = strat
+            is_sideways = (regime == 'sideways')
 
-            # ── CHECK STOP-LOSSES (check BEFORE trading) ──
+            # ── Circuit breaker: in cooldown → skip buying ──
+            if cooldown_remaining > 0:
+                cooldown_remaining -= 1
+
+            # ── CHECK STOP-LOSSES ──
             for sym in list(positions.keys()):
                 pos = positions[sym]
                 low = get_price(sym, d, 'low')
                 if low is None: continue
                 dd = (low / pos['entry_price'] - 1)
                 if dd <= STOP_LOSS:
-                    # Stop triggered — sell at stop price (entry * 0.95)
                     stop_price = pos['entry_price'] * (1 + STOP_LOSS)
                     gross_ret = STOP_LOSS
                     cash += pos['shares'] * stop_price * (1 - COST_EXIT)
@@ -211,7 +230,16 @@ def run_backtest(mode_label, strategy):
                         'net_return': gross_ret - COST_RT,
                         'shares': pos['shares'], 'cost_ratio': COST_RT,
                     })
+                    # Track stop-loss for repeat-loser filter
+                    recent_losers[sym] = d
+                    # Update consecutive loss counter
+                    consecutive_losses += 1
                     del positions[sym]
+
+            # ── Circuit breaker trigger ──
+            if consecutive_losses >= MAX_CONSECUTIVE_LOSSES:
+                cooldown_remaining = COOLDOWN_DAYS
+                consecutive_losses = 0
 
             # ── SELL matured positions ──
             to_sell = [sym for sym, pos in positions.items() if pos['sell_date'] <= d]
@@ -231,9 +259,12 @@ def run_backtest(mode_label, strategy):
                     'gross_return': gross_ret, 'net_return': net_ret,
                     'shares': pos['shares'], 'cost_ratio': COST_RT,
                 })
+                # Reset consecutive loss on any matured win
+                if net_ret > 0:
+                    consecutive_losses = 0
 
-            # ── SELECT new picks ──
-            if max_pos > 0:  # skip if regime says no trading
+            # ── BUY selection (skip if cooldown or no slots) ──
+            if max_pos > 0 and cooldown_remaining == 0:
                 cap_cash = cash * capacity
                 open_slots = max(0, max_pos - len(positions))
                 if open_slots > 0 and di < len(te_dates) - MODEL_CFG[0]['horizon']:
@@ -241,23 +272,48 @@ def run_backtest(mode_label, strategy):
                     day_syms = pdf.loc[day_mask, 'vt_symbol'].values
                     next_date = te_dates[min(di + 1, len(te_dates) - 1)]
 
-                    valid = [(j, sym, day_scores[j], get_price(sym, next_date, 'open'))
-                             for j, sym in enumerate(day_syms)
-                             if sym not in positions and get_price(sym, next_date, 'open') is not None]
+                    # Build candidates with repeat-loser filter
+                    valid = []
+                    for j, sym in enumerate(day_syms):
+                        if sym in positions:
+                            continue
+                        # Repeat-loser filter: don't re-buy recently stopped-out stocks
+                        if sym in recent_losers:
+                            days_since = (d - recent_losers[sym]).days
+                            if days_since < REPEAT_LOSER_BAN_DAYS:
+                                continue
+                        price = get_price(sym, next_date, 'open')
+                        if price is None:
+                            continue
+                        valid.append((j, sym, day_scores[j], price))
 
                     if len(valid) > 0:
                         scores = np.array([v[2] for v in valid])
                         prices = [v[3] for v in valid]
                         syms = [v[1] for v in valid]
-                        cand = scores >= threshold
-                        if cand.sum() > 0:
-                            order = np.argsort(-scores[cand])[:open_slots]
-                            pick_syms = [syms[k] for k in range(len(syms)) if cand[k]]
-                            pick_syms = [pick_syms[k] for k in order]
-                            pick_prices = [prices[k] for k in range(len(syms)) if cand[k]]
-                            pick_prices = [pick_prices[k] for k in order]
 
-                            sell_date = te_dates[min(di + MODEL_CFG[0]['horizon'], len(te_dates) - 1)]
+                        # Threshold filter
+                        cand_mask = scores >= threshold
+                        if cand_mask.sum() > 0:
+                            cand_scores = scores[cand_mask]
+                            cand_syms = [syms[k] for k in range(len(syms)) if cand_mask[k]]
+                            cand_prices = [prices[k] for k in range(len(syms)) if cand_mask[k]]
+
+                            # v3: In SIDEWAYS, only buy top 20% of scores
+                            if is_sideways and len(cand_scores) > open_slots:
+                                pct = np.percentile(cand_scores, (1 - SIDEWAYS_SCORE_PCTILE) * 100)
+                                strict_mask = cand_scores >= pct
+                                cand_scores = cand_scores[strict_mask]
+                                cand_syms = [cand_syms[k] for k in range(len(cand_syms)) if strict_mask[k]]
+                                cand_prices = [cand_prices[k] for k in range(len(cand_prices)) if strict_mask[k]]
+
+                            # Sort by score, take top open_slots
+                            order = np.argsort(-cand_scores)[:open_slots]
+                            pick_syms = [cand_syms[k] for k in order]
+                            pick_prices = [cand_prices[k] for k in order]
+
+                            sell_date = te_dates[min(di + MODEL_CFG[0]['horizon'],
+                                                     len(te_dates) - 1)]
                             per_stock = cap_cash / len(pick_syms) if len(pick_syms) > 0 else 0
 
                             for k, sym in enumerate(pick_syms):
@@ -269,6 +325,9 @@ def run_backtest(mode_label, strategy):
                                     'shares': shares, 'entry_price': ep,
                                     'entry_date': d, 'sell_date': sell_date,
                                 }
+            else:
+                # In cooldown: cash does nothing but we still decrement
+                pass
 
             # ── Daily mark-to-market ──
             pos_value = 0
@@ -281,7 +340,7 @@ def run_backtest(mode_label, strategy):
                 'regime': regime, 'model': model_name, 'num_positions': len(positions),
             })
 
-        # ── Window analysis ──
+        # ── Window stats ──
         df_val = pd.DataFrame(portfolio_values)
         trades_df = pd.DataFrame(window_trades)
         n = len(window_trades)
@@ -299,10 +358,17 @@ def run_backtest(mode_label, strategy):
             avg_hold = (trades_df['exit_date'].apply(lambda x: pd.Timestamp(x)) -
                        trades_df['entry_date'].apply(lambda x: pd.Timestamp(x))).dt.days.mean()
 
+            # Check if circuit breaker ever triggered
+            stop_syms = trades_df[trades_df['exit_reason'] == 'stop_loss']['symbol'].nunique()
+            skipped = len([v for v in portfolio_values if v['num_positions'] == 0 and v['cash'] > 999000])
+            # Count unique repeat-loser blocks
+            hot = len(recent_losers)
+
             print(f"\n  ── {wname} ──")
             print(f"    Trades: {n} | WR: {wr:.1%} | AvgNet: {avg_nr:.2%}")
             print(f"    CumRet: {cr:.2%} | Sharpe: {sr:.2f} | MaxDD: {mdd:.2%} | PF: {pf:.2f}")
             print(f"    AvgHold: {avg_hold:.0f}d | AvgWin: {avg_w:.2%} | AvgLoss: {avg_l:.2%}")
+            print(f"    Protection stats: {hot} repeat-losers blocked | {skipped} cooldown days")
 
         df_val['window'] = wname
         all_equity.append(df_val)
@@ -325,17 +391,14 @@ def run_backtest(mode_label, strategy):
         print(f"    Total trades: {len(df_t)}")
         print(f"    Win rate: {wr:.1%}")
         print(f"    Avg net return: {avg_nr:.4%}")
-        print(f"    Avg win: {avg_w:.4%} | Avg loss: {avg_l:.4%}")
         print(f"    Profit factor: {pf:.2f}")
 
-        # Exit reason breakdown
         print(f"\n    Exit reasons:")
         for r in ['matured', 'stop_loss']:
             sub = df_t[df_t['exit_reason'] == r]
             if len(sub) > 0:
                 print(f"      {r}: {len(sub)} trades, WR {(sub['net_return']>0).mean():.1%}, avg {sub['net_return'].mean():.4%}")
 
-        # Regime breakdown
         print(f"\n    By regime:")
         for r in sorted(df_t['regime'].unique()):
             sub = df_t[df_t['regime'] == r]
@@ -362,23 +425,80 @@ def run_backtest(mode_label, strategy):
 # RUN BOTH MODES
 # ════════════════════════════════════════════════════════════════════
 results = {}
-for mode_name, mode_key in [('A) 5d_10% Single Model + Risk Controls', '5d_only'),
-                             ('B) Dual Model + Risk Controls', 'dual')]:
+for mode_name, mode_key in [('A) 5d_10% Single Model + Drawdown Protection', '5d_only'),
+                             ('B) Dual Model + Drawdown Protection', 'dual')]:
     strat = build_strat(mode_key)
     trades, equity = run_backtest(mode_name, strat)
     results[mode_key] = {'trades': trades, 'equity': equity}
 
 # ── Save ──
-print(f"\n[Saving results...]")
+print(f"\n[Saving to quant_archive/2026-05/backtest_v3_*.csv ...]")
 os.makedirs(os.path.join(ROOT, 'quant_archive', '2026-05'), exist_ok=True)
 for key in ['5d_only', 'dual']:
     r = results[key]
     df_t = pd.DataFrame(r['trades'])
     df_e = pd.concat(r['equity'], ignore_index=True).sort_values('date')
     if len(df_t) > 0:
-        df_t.to_csv(os.path.join(ROOT, 'quant_archive', '2026-05', f'backtest_v2r2_{key}_trades.csv'), index=False)
+        df_t.to_csv(os.path.join(ROOT, 'quant_archive', '2026-05',
+                                 f'backtest_v3_{key}_trades.csv'), index=False)
     if len(df_e) > 0:
-        df_e.to_csv(os.path.join(ROOT, 'quant_archive', '2026-05', f'backtest_v2r2_{key}_equity.csv'), index=False)
+        df_e.to_csv(os.path.join(ROOT, 'quant_archive', '2026-05',
+                                 f'backtest_v3_{key}_equity.csv'), index=False)
+
+# ── Compare summary ──
+print(f"\n{'='*72}")
+print("V3 vs V2 COMPARISON")
+print(f"{'='*72}")
+# Try to load V2 results
+try:
+    v2_equity = pd.read_csv(os.path.join(ROOT, 'quant_archive', '2026-05', 'backtest_v2_dual_equity.csv'))
+    if len(v2_equity) > 0:
+        v2_eq = v2_equity.copy()
+        v2_eq['eq'] = v2_eq['value'] / v2_eq['value'].iloc[0]
+        v2_eq['ret'] = v2_eq['value'].pct_change().fillna(0)
+        v2_cr = v2_eq['value'].iloc[-1] / v2_eq['value'].iloc[0] - 1
+        v2_sr = v2_eq['ret'].mean() / v2_eq['ret'].std() * np.sqrt(240) if v2_eq['ret'].std() > 0 else 0
+        v2_eq['cmax'] = v2_eq['value'].cummax()
+        v2_mdd = (v2_eq['value'] / v2_eq['cmax'] - 1).min()
+        print(f"\n  V2-B (baseline):    {v2_cr:.2%} return, Sharpe {v2_sr:.2f}, maxDD {v2_mdd:.2%}")
+
+    for key in ['5d_only', 'dual']:
+        r = results[key]
+        df_e = pd.concat(r['equity'], ignore_index=True).sort_values('date')
+        if len(df_e) > 0:
+            eq = df_e.copy()
+            eq['eq'] = eq['value'] / eq['value'].iloc[0]
+            eq['ret'] = eq['value'].pct_change().fillna(0)
+            cr = eq['value'].iloc[-1] / eq['value'].iloc[0] - 1
+            sr = eq['ret'].mean() / eq['ret'].std() * np.sqrt(240) if eq['ret'].std() > 0 else 0
+            eq['cmax'] = eq['value'].cummax()
+            mdd = (eq['value'] / eq['cmax'] - 1).min()
+            tag = 'V3-A (single)' if key == '5d_only' else 'V3-B (dual)'
+            delta_cr = (cr - v2_cr) if key == 'dual' else (cr - v2_cr)
+            delta_dd = (mdd - v2_mdd) if key == 'dual' else (mdd - v2_mdd)
+            print(f"  {tag}: {cr:.2%} return, Sharpe {sr:.2f}, maxDD {mdd:.2%}")
+            print(f"    vs V2-B: return {delta_cr:+.2%}, maxDD {delta_dd:+.2%}")
+
+        # V2-B trades for regime breakdown comparison
+        v2_trades = pd.read_csv(os.path.join(ROOT, 'quant_archive', '2026-05', 'backtest_v2_dual_trades.csv'))
+        v2_trades['net_return'] = v2_trades['net_return'].clip(-0.30, 0.30)
+        v3_trades = pd.DataFrame(results['dual']['trades'])
+        if len(v3_trades) > 0:
+            v3_trades['net_return'] = v3_trades['net_return'].clip(-0.30, 0.30)
+            print(f"\n  Regime comparison (V2-B → V3-B):")
+            for regime in ['sideways', 'bear', 'severe_bear', 'bull', 'recovery']:
+                old = v2_trades[v2_trades['regime'] == regime]
+                new = v3_trades[v3_trades['regime'] == regime]
+                if len(old) > 0 or len(new) > 0:
+                    o_wr = (old['net_return'] > 0).mean() if len(old) > 0 else 0
+                    n_wr = (new['net_return'] > 0).mean() if len(new) > 0 else 0
+                    o_avg = old['net_return'].mean() if len(old) > 0 else 0
+                    n_avg = new['net_return'].mean() if len(new) > 0 else 0
+                    print(f"    {regime:12s}: V2 {len(old):>3}t WR {o_wr:.0%} avg{o_avg:.2%}"
+                          f" → V3 {len(new):>3}t WR {n_wr:.0%} avg{n_avg:.2%}")
+
+except Exception as e:
+    print(f"  Comparison skipped: {e}")
 
 print(f"\nTotal runtime: {(time.time()-t0)/60:.1f} min")
 print("Done!")

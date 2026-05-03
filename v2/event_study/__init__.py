@@ -1,5 +1,2 @@
-"""v2 event study framework.
-
-CARs around earnings, market model for expected returns,
-cross-sectional t-tests. Uses news datetime + next-day price changes.
-"""
+# Placeholder — v2 feature module not yet implemented
+# See v2/README.md for architecture overview

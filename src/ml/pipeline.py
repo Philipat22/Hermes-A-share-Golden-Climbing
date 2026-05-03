@@ -281,9 +281,13 @@ class SurgeMLPipeline:
             "objective": "binary",
             "metric": "auc",
             "num_leaves": 31,
+            "max_depth": 5,              # 限制树深度 — 反过拟合
             "learning_rate": 0.05,
             "feature_fraction": 0.8,
             "bagging_fraction": 0.8,
+            "lambda_l1": 0.1,            # L1 正则 — 稀疏特征选择
+            "lambda_l2": 0.1,            # L2 正则 — 权重衰减
+            "min_child_samples": 100,     # 叶子最小样本 — 防过拟合
             "random_state": 42,
             "verbosity": -1,
         }
@@ -299,8 +303,12 @@ class SurgeMLPipeline:
             X_tr, y_tr = X[mask_train], y[mask_train]
             X_te = X[mask_test]
 
-            m = lgb.train(wf_params, lgb.Dataset(X_tr, label=y_tr),
-                         num_boost_round=150)
+            m = lgb.train(
+                wf_params,
+                lgb.Dataset(X_tr, label=y_tr),
+                num_boost_round=150,
+                callbacks=[lgb.early_stopping(20), lgb.log_evaluation(0)],
+            )
             probs = m.predict(X_te)
             scored = list(zip(probs, meta[mask_test]["vt_symbol"].values))
             scored.sort(key=lambda x: x[0], reverse=True)

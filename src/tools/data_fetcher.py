@@ -107,6 +107,7 @@ def get_prices(
             ts_code=ts_code,
             start_date=start_date.replace("-", ""),
             end_date=end_date.replace("-", ""),
+            adj='qfq',  # 前复权 — 技术指标不因除权失真
         )
     except Exception as e:
         print(f"[WARN] Tushare daily failed for {ts_code}: {e}")

@@ -1,0 +1,11 @@
+{
+  "version": "dual_model_v1",
+  "cost_roundtrip": 0.0031,
+  "total_trades": 311,
+  "win_rate": 0.49517684887459806,
+  "avg_net_return": 0.015718545882849287,
+  "profit_factor": 1.255624852039842,
+  "full_cum_return": -0.34160553643876734,
+  "full_sharpe": 0.8632179957412389,
+  "full_max_dd": -0.9466921890149298
+}
