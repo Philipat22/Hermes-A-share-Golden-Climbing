@@ -41,7 +41,8 @@ MODEL_CFG = [
 WF_WINDOWS = [
     ('2019-01-01', '2022-01-01', '2022-01-01', '2023-01-01', '2022 Bear'),
     ('2019-01-01', '2023-01-01', '2023-01-01', '2024-01-01', '2023 Sideways'),
-    ('2019-01-01', '2024-01-01', '2024-01-01', '2025-07-01', '2024-2025 Recovery'),
+    ('2019-01-01', '2024-01-01', '2024-01-01', '2025-01-01', '2024 Bull'),
+    ('2019-01-01', '2025-01-01', '2025-01-01', '2026-04-30', '2025-2026'),
 ]
 
 # ── Strategy configs ─────────────────────────────────────────────
@@ -89,7 +90,7 @@ print(f"  {len(ALL_FEATURES)} features")
 # CSI300 regime data
 print("\n[Fetching CSI300 regime data...]")
 pro = ts.pro_api(TU_TOKEN)
-csi = pro.index_daily(ts_code='000300.SH', start_date='20150101', end_date='20250701')
+csi = pro.index_daily(ts_code='000300.SH', start_date='20150101', end_date='20260430')
 csi['trade_date'] = pd.to_datetime(csi['trade_date'])
 csi = csi.sort_values('trade_date').reset_index(drop=True)
 for m in [20, 60, 120]:

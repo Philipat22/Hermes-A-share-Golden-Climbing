@@ -1,0 +1,3610 @@
+{
+  "config": {
+    "pool_size": 497,
+    "n_evals": 10,
+    "skipped": 4,
+    "forward_days": [
+      5,
+      10,
+      20,
+      60
+    ],
+    "benchmark": "CSI300",
+    "top_n": 5
+  },
+  "runtime_s": 15.3,
+  "metrics": {
+    "5d": {
+      "n": 50,
+      "win_rate": 0.48,
+      "avg_return": -0.01,
+      "median_return": -0.15,
+      "max_return": 23.81,
+      "min_return": -15.82,
+      "std_return": 7.47,
+      "benchmark_avg": -0.02,
+      "excess": 0.01
+    },
+    "10d": {
+      "n": 50,
+      "win_rate": 0.5,
+      "avg_return": 2.18,
+      "median_return": -0.14,
+      "max_return": 53.33,
+      "min_return": -15.85,
+      "std_return": 14.52,
+      "benchmark_avg": 0.37,
+      "excess": 1.81
+    },
+    "20d": {
+      "n": 50,
+      "win_rate": 0.6,
+      "avg_return": 9.38,
+      "median_return": 1.84,
+      "max_return": 112.7,
+      "min_return": -19.22,
+      "std_return": 23.66,
+      "benchmark_avg": 1.63,
+      "excess": 7.75
+    },
+    "60d": {
+      "n": 50,
+      "win_rate": 0.72,
+      "avg_return": 28.12,
+      "median_return": 9.78,
+      "max_return": 178.24,
+      "min_return": -25.37,
+      "std_return": 47.49,
+      "benchmark_avg": 5.59,
+      "excess": 22.53
+    }
+  },
+  "periods": [
+    {
+      "date": "20260304",
+      "n_signals_p1": 77,
+      "n_signals_p2": 98,
+      "picks": [
+        {
+          "ts_code": "000697.SZ",
+          "detected": true,
+          "total_score": 77,
+          "pattern_type": "W",
+          "pattern_score": 81,
+          "volume_score": 90,
+          "sector_score": 91,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 77,
+          "entry_price": 10.23,
+          "detail": "W?8.428.56 9.32  |    | -3.4%->16.4% accel 19.8% | 8.6%(41)+4 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 81,
+              "detail": "W?8.428.56 9.32 ",
+              "left_bottom": 8.42,
+              "right_bottom": 8.56,
+              "neckline": 9.32,
+              "break_confirmed": true,
+              "bottom_spacing": 0.1069
+            },
+            "volume_detail": {
+              "score": 90,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": "  ",
+              "recent_vol_ratio": 2.56
+            },
+            "accel_detail": {
+              "acceleration": 0.1979,
+              "trend_status": "",
+              "recent_return": 0.1638,
+              "prior_return": -0.0341,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-3.4%->16.4% accel 19.8%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 4,
+              "peers_in_sector": 4,
+              "detail": "8.6%(41)+4 strong(50)",
+              "sector_name": "航空",
+              "sector_index_perf": "8.6%",
+              "sector_index_code": "801740.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 0.88,
+            "10": -0.98,
+            "20": -8.31,
+            "60": -0.59
+          }
+        },
+        {
+          "ts_code": "000890.SZ",
+          "detected": true,
+          "total_score": 74,
+          "pattern_type": "W",
+          "pattern_score": 85,
+          "volume_score": 83,
+          "sector_score": 79,
+          "accel_score": 85,
+          "fake_score": 25,
+          "ml_score": 0,
+          "final_score": 49,
+          "entry_price": 8.87,
+          "detail": "W?5.045.05 7.29  |    | 4.0%->61.3% accel 57.3% | 0.0%(29)+9 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 85,
+              "detail": "W?5.045.05 7.29 ",
+              "left_bottom": 5.04,
+              "right_bottom": 5.05,
+              "neckline": 7.29,
+              "break_confirmed": true,
+              "bottom_spacing": 0.2302
+            },
+            "volume_detail": {
+              "score": 83,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "  ",
+              "recent_vol_ratio": 2.21
+            },
+            "accel_detail": {
+              "acceleration": 0.573,
+              "trend_status": "",
+              "recent_return": 0.6127,
+              "prior_return": 0.0397,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "4.0%->61.3% accel 57.3%"
+            },
+            "sector_detail": {
+              "score": 79,
+              "peer_signals": 9,
+              "peers_in_sector": 9,
+              "detail": "0.0%(29)+9 strong(50)",
+              "sector_name": "环境保护",
+              "sector_index_perf": "0.0%",
+              "sector_index_code": ""
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 25,
+              "is_likely_fake": false,
+              "flags": [
+                "98%(-25)"
+              ],
+              "detail": "98%(-25)"
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 3.27,
+            "10": 53.33,
+            "20": 72.49,
+            "60": 93.91
+          }
+        },
+        {
+          "ts_code": "002213.SZ",
+          "detected": true,
+          "total_score": 73,
+          "pattern_type": "V",
+          "pattern_score": 78,
+          "volume_score": 60,
+          "sector_score": 100,
+          "accel_score": 80,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 73,
+          "entry_price": 26.98,
+          "detail": "V?19.6% 11.3% 10d  | -9.1%->4.5% accel 13.6% | 24.4%(50)+6 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 78,
+              "detail": "V?19.6% 11.3% 10d ",
+              "drop_depth": -0.1961,
+              "recovery_strength": 0.1133,
+              "reverse_days": 10,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 60,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 1.12
+            },
+            "accel_detail": {
+              "acceleration": 0.136,
+              "trend_status": "",
+              "recent_return": 0.0445,
+              "prior_return": -0.0915,
+              "is_accelerating": true,
+              "score": 80,
+              "detail": "-9.1%->4.5% accel 13.6%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 6,
+              "peers_in_sector": 6,
+              "detail": "24.4%(50)+6 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 1.74,
+            "10": 13.34,
+            "20": 8.56,
+            "60": 37.18
+          }
+        },
+        {
+          "ts_code": "000155.SZ",
+          "detected": true,
+          "total_score": 71,
+          "pattern_type": "V",
+          "pattern_score": 77,
+          "volume_score": 60,
+          "sector_score": 91,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 71,
+          "entry_price": 14.28,
+          "detail": "V?14.0% 18.9% 17d  | -8.2%->14.8% accel 23.0% | 8.2%(41)+4 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 77,
+              "detail": "V?14.0% 18.9% 17d ",
+              "drop_depth": -0.1395,
+              "recovery_strength": 0.1893,
+              "reverse_days": 17,
+              "drop_volume_surge": true,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 60,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 1.34
+            },
+            "accel_detail": {
+              "acceleration": 0.2298,
+              "trend_status": "",
+              "recent_return": 0.1479,
+              "prior_return": -0.0819,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-8.2%->14.8% accel 23.0%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 4,
+              "peers_in_sector": 4,
+              "detail": "8.2%(41)+4 strong(50)",
+              "sector_name": "新型电力",
+              "sector_index_perf": "8.2%",
+              "sector_index_code": "801730.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 3.85,
+            "10": -1.82,
+            "20": 8.05,
+            "60": 34.8
+          }
+        },
+        {
+          "ts_code": "000762.SZ",
+          "detected": true,
+          "total_score": 71,
+          "pattern_type": "V",
+          "pattern_score": 76,
+          "volume_score": 60,
+          "sector_score": 91,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 71,
+          "entry_price": 28.88,
+          "detail": "V?15.8% 23.2% 14d  | -12.4%->11.6% accel 24.0% | 5.5%(41)+3 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 76,
+              "detail": "V?15.8% 23.2% 14d ",
+              "drop_depth": -0.1578,
+              "recovery_strength": 0.2325,
+              "reverse_days": 14,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 60,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 0.88
+            },
+            "accel_detail": {
+              "acceleration": 0.2403,
+              "trend_status": "",
+              "recent_return": 0.1164,
+              "prior_return": -0.1239,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-12.4%->11.6% accel 24.0%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 3,
+              "peers_in_sector": 3,
+              "detail": "5.5%(41)+3 strong(50)",
+              "sector_name": "小金属",
+              "sector_index_perf": "5.5%",
+              "sector_index_code": "801050.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 2.8,
+            "10": -4.85,
+            "20": -1.59,
+            "60": 34.7
+          }
+        }
+      ],
+      "benchmark": {
+        "5": null,
+        "10": null,
+        "20": null,
+        "60": null
+      }
+    },
+    {
+      "date": "20260127",
+      "n_signals_p1": 89,
+      "n_signals_p2": 101,
+      "picks": [
+        {
+          "ts_code": "000711.SZ",
+          "detected": true,
+          "total_score": 74,
+          "pattern_type": "W",
+          "pattern_score": 83,
+          "volume_score": 90,
+          "sector_score": 79,
+          "accel_score": 83,
+          "fake_score": 20,
+          "ml_score": 0,
+          "final_score": 54,
+          "entry_price": 1.89,
+          "detail": "W?1.661.66 1.85  |    | -3.9%->10.5% accel 14.5% | 0.0%(29)+10 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 83,
+              "detail": "W?1.661.66 1.85 ",
+              "left_bottom": 1.66,
+              "right_bottom": 1.66,
+              "neckline": 1.85,
+              "break_confirmed": true,
+              "bottom_spacing": 0.1145
+            },
+            "volume_detail": {
+              "score": 90,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": "  ",
+              "recent_vol_ratio": 4.1
+            },
+            "accel_detail": {
+              "acceleration": 0.1446,
+              "trend_status": "",
+              "recent_return": 0.1053,
+              "prior_return": -0.0393,
+              "is_accelerating": true,
+              "score": 83,
+              "detail": "-3.9%->10.5% accel 14.5%"
+            },
+            "sector_detail": {
+              "score": 79,
+              "peer_signals": 10,
+              "peers_in_sector": 10,
+              "detail": "0.0%(29)+10 strong(50)",
+              "sector_name": "环境保护",
+              "sector_index_perf": "0.0%",
+              "sector_index_code": ""
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 20,
+              "is_likely_fake": false,
+              "flags": [
+                "(-20)"
+              ],
+              "detail": "(-20)"
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 23.81,
+            "10": 43.39,
+            "20": 112.7,
+            "60": 152.91
+          }
+        },
+        {
+          "ts_code": "000751.SZ",
+          "detected": true,
+          "total_score": 72,
+          "pattern_type": "W",
+          "pattern_score": 74,
+          "volume_score": 98,
+          "sector_score": 76,
+          "accel_score": 85,
+          "fake_score": 25,
+          "ml_score": 0,
+          "final_score": 47,
+          "entry_price": 6.46,
+          "detail": "W?3.663.98 5.31  |     | 5.8%->47.8% accel 42.0% | 5.5%(41)+1 strong(35)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 74,
+              "detail": "W?3.663.98 5.31 ",
+              "left_bottom": 3.66,
+              "right_bottom": 3.98,
+              "neckline": 5.31,
+              "break_confirmed": true,
+              "bottom_spacing": 0.1339
+            },
+            "volume_detail": {
+              "score": 98,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": "   ",
+              "recent_vol_ratio": 2.32
+            },
+            "accel_detail": {
+              "acceleration": 0.4201,
+              "trend_status": "",
+              "recent_return": 0.4783,
+              "prior_return": 0.0581,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "5.8%->47.8% accel 42.0%"
+            },
+            "sector_detail": {
+              "score": 76,
+              "peer_signals": 1,
+              "peers_in_sector": 1,
+              "detail": "5.5%(41)+1 strong(35)",
+              "sector_name": "铅锌",
+              "sector_index_perf": "5.5%",
+              "sector_index_code": "801050.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 25,
+              "is_likely_fake": false,
+              "flags": [
+                "65%(-25)"
+              ],
+              "detail": "65%(-25)"
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -3.1,
+            "10": -13.78,
+            "20": 8.05,
+            "60": -5.42
+          }
+        },
+        {
+          "ts_code": "000990.SZ",
+          "detected": true,
+          "total_score": 70,
+          "pattern_type": "W",
+          "pattern_score": 74,
+          "volume_score": 75,
+          "sector_score": 91,
+          "accel_score": 69,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 70,
+          "entry_price": 8.96,
+          "detail": "W?7.337.84 8.39  |   | 0.7%->10.6% accel 9.9% | 5.4%(41)+6 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 74,
+              "detail": "W?7.337.84 8.39 ",
+              "left_bottom": 7.33,
+              "right_bottom": 7.84,
+              "neckline": 8.39,
+              "break_confirmed": true,
+              "bottom_spacing": 0.1119
+            },
+            "volume_detail": {
+              "score": 75,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": " ",
+              "recent_vol_ratio": 1.87
+            },
+            "accel_detail": {
+              "acceleration": 0.0987,
+              "trend_status": "",
+              "recent_return": 0.1062,
+              "prior_return": 0.0075,
+              "is_accelerating": true,
+              "score": 69,
+              "detail": "0.7%->10.6% accel 9.9%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 6,
+              "peers_in_sector": 6,
+              "detail": "5.4%(41)+6 strong(50)",
+              "sector_name": "化工原料",
+              "sector_index_perf": "5.4%",
+              "sector_index_code": "801030.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -7.7,
+            "10": -5.25,
+            "20": -4.02,
+            "60": 44.42
+          }
+        },
+        {
+          "ts_code": "001309.SZ",
+          "detected": true,
+          "total_score": 70,
+          "pattern_type": "V",
+          "pattern_score": 70,
+          "volume_score": 50,
+          "sector_score": 100,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 70,
+          "entry_price": 278.25,
+          "detail": "V?14.1% 50.2% 26d  | -2.5%->19.4% accel 21.9% | 24.4%(50)+10 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 70,
+              "detail": "V?14.1% 50.2% 26d ",
+              "drop_depth": -0.1413,
+              "recovery_strength": 0.5022,
+              "reverse_days": 26,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 50,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": false,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 0.85
+            },
+            "accel_detail": {
+              "acceleration": 0.2193,
+              "trend_status": "",
+              "recent_return": 0.1942,
+              "prior_return": -0.0251,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-2.5%->19.4% accel 21.9%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 10,
+              "peers_in_sector": 10,
+              "detail": "24.4%(50)+10 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -9.22,
+            "10": -14.63,
+            "20": -9.59,
+            "60": 87.94
+          }
+        },
+        {
+          "ts_code": "002079.SZ",
+          "detected": true,
+          "total_score": 70,
+          "pattern_type": "W",
+          "pattern_score": 77,
+          "volume_score": 65,
+          "sector_score": 91,
+          "accel_score": 75,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 70,
+          "entry_price": 11.22,
+          "detail": "W?9.079.50 10.55  | 2.5%->14.3% accel 11.8% | 8.2%(41)+8 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 77,
+              "detail": "W?9.079.50 10.55 ",
+              "left_bottom": 9.07,
+              "right_bottom": 9.5,
+              "neckline": 10.55,
+              "break_confirmed": true,
+              "bottom_spacing": 0.0948
+            },
+            "volume_detail": {
+              "score": 65,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": false,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 2.33
+            },
+            "accel_detail": {
+              "acceleration": 0.1175,
+              "trend_status": "",
+              "recent_return": 0.1426,
+              "prior_return": 0.0251,
+              "is_accelerating": true,
+              "score": 75,
+              "detail": "2.5%->14.3% accel 11.8%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 8,
+              "peers_in_sector": 8,
+              "detail": "8.2%(41)+8 strong(50)",
+              "sector_name": "电气设备",
+              "sector_index_perf": "8.2%",
+              "sector_index_code": "801730.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -3.48,
+            "10": 6.42,
+            "20": -6.68,
+            "60": 4.19
+          }
+        }
+      ],
+      "benchmark": {
+        "5": null,
+        "10": null,
+        "20": null,
+        "60": null
+      }
+    },
+    {
+      "date": "20251226",
+      "n_signals_p1": 94,
+      "n_signals_p2": 101,
+      "picks": [
+        {
+          "ts_code": "001309.SZ",
+          "detected": true,
+          "total_score": 79,
+          "pattern_type": "V",
+          "pattern_score": 90,
+          "volume_score": 75,
+          "sector_score": 100,
+          "accel_score": 81,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 79,
+          "entry_price": 239.0,
+          "detail": "V?14.1% 25.0% 6d  |   | -2.4%->11.3% accel 13.7% | 24.4%(50)+10 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 90,
+              "detail": "V?14.1% 25.0% 6d ",
+              "drop_depth": -0.1413,
+              "recovery_strength": 0.2497,
+              "reverse_days": 6,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": true
+            },
+            "volume_detail": {
+              "score": 75,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": " ",
+              "recent_vol_ratio": 1.85
+            },
+            "accel_detail": {
+              "acceleration": 0.1369,
+              "trend_status": "",
+              "recent_return": 0.1132,
+              "prior_return": -0.0237,
+              "is_accelerating": true,
+              "score": 81,
+              "detail": "-2.4%->11.3% accel 13.7%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 10,
+              "peers_in_sector": 10,
+              "detail": "24.4%(50)+10 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 6.9,
+            "10": -2.51,
+            "20": 16.42,
+            "60": 55.64
+          }
+        },
+        {
+          "ts_code": "000551.SZ",
+          "detected": true,
+          "total_score": 77,
+          "pattern_type": "W",
+          "pattern_score": 81,
+          "volume_score": 90,
+          "sector_score": 91,
+          "accel_score": 85,
+          "fake_score": 20,
+          "ml_score": 0,
+          "final_score": 57,
+          "entry_price": 16.97,
+          "detail": "W?10.5710.69 11.75  |    | 6.4%->47.6% accel 41.2% | 8.3%(41)+5 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 81,
+              "detail": "W?10.5710.69 11.75 ",
+              "left_bottom": 10.57,
+              "right_bottom": 10.69,
+              "neckline": 11.75,
+              "break_confirmed": true,
+              "bottom_spacing": 0.0965
+            },
+            "volume_detail": {
+              "score": 90,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": "  ",
+              "recent_vol_ratio": 5.4
+            },
+            "accel_detail": {
+              "acceleration": 0.4118,
+              "trend_status": "",
+              "recent_return": 0.4757,
+              "prior_return": 0.0638,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "6.4%->47.6% accel 41.2%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 5,
+              "peers_in_sector": 5,
+              "detail": "8.3%(41)+5 strong(50)",
+              "sector_name": "专用机械",
+              "sector_index_perf": "8.3%",
+              "sector_index_code": "801890.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 20,
+              "is_likely_fake": false,
+              "flags": [
+                "(-20)"
+              ],
+              "detail": "(-20)"
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -10.61,
+            "10": -15.85,
+            "20": -8.54,
+            "60": -20.74
+          }
+        },
+        {
+          "ts_code": "000985.SZ",
+          "detected": true,
+          "total_score": 77,
+          "pattern_type": "V",
+          "pattern_score": 80,
+          "volume_score": 90,
+          "sector_score": 91,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 77,
+          "entry_price": 19.9,
+          "detail": "V?10.0% 20.1% 9d  |    | -7.6%->8.5% accel 16.1% | 5.4%(41)+6 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 80,
+              "detail": "V?10.0% 20.1% 9d ",
+              "drop_depth": -0.1002,
+              "recovery_strength": 0.2011,
+              "reverse_days": 9,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": true
+            },
+            "volume_detail": {
+              "score": 90,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": "  ",
+              "recent_vol_ratio": 2.53
+            },
+            "accel_detail": {
+              "acceleration": 0.1611,
+              "trend_status": "",
+              "recent_return": 0.0851,
+              "prior_return": -0.0761,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-7.6%->8.5% accel 16.1%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 6,
+              "peers_in_sector": 6,
+              "detail": "5.4%(41)+6 strong(50)",
+              "sector_name": "化工原料",
+              "sector_index_perf": "5.4%",
+              "sector_index_code": "801030.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -1.56,
+            "10": 0.9,
+            "20": 9.8,
+            "60": -1.86
+          }
+        },
+        {
+          "ts_code": "002168.SZ",
+          "detected": true,
+          "total_score": 77,
+          "pattern_type": "V",
+          "pattern_score": 87,
+          "volume_score": 75,
+          "sector_score": 91,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 77,
+          "entry_price": 3.99,
+          "detail": "V?13.0% 14.3% 8d  |   | -7.4%->9.6% accel 17.0% | 8.2%(41)+7 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 87,
+              "detail": "V?13.0% 14.3% 8d ",
+              "drop_depth": -0.1297,
+              "recovery_strength": 0.1433,
+              "reverse_days": 8,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": true
+            },
+            "volume_detail": {
+              "score": 75,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": " ",
+              "recent_vol_ratio": 2.21
+            },
+            "accel_detail": {
+              "acceleration": 0.1699,
+              "trend_status": "",
+              "recent_return": 0.0962,
+              "prior_return": -0.0738,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-7.4%->9.6% accel 17.0%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 7,
+              "peers_in_sector": 7,
+              "detail": "8.2%(41)+7 strong(50)",
+              "sector_name": "电气设备",
+              "sector_index_perf": "8.2%",
+              "sector_index_code": "801730.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 3.01,
+            "10": 2.51,
+            "20": 10.03,
+            "60": -0.25
+          }
+        },
+        {
+          "ts_code": "003027.SZ",
+          "detected": true,
+          "total_score": 75,
+          "pattern_type": "V",
+          "pattern_score": 91,
+          "volume_score": 75,
+          "sector_score": 79,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 75,
+          "entry_price": 22.45,
+          "detail": "V?17.1% 17.2% 8d  |   | -10.1%->15.4% accel 25.5% | 0.0%(29)+9 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 91,
+              "detail": "V?17.1% 17.2% 8d ",
+              "drop_depth": -0.1713,
+              "recovery_strength": 0.1717,
+              "reverse_days": 8,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": true
+            },
+            "volume_detail": {
+              "score": 75,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": " ",
+              "recent_vol_ratio": 2.03
+            },
+            "accel_detail": {
+              "acceleration": 0.255,
+              "trend_status": "",
+              "recent_return": 0.1542,
+              "prior_return": -0.1008,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-10.1%->15.4% accel 25.5%"
+            },
+            "sector_detail": {
+              "score": 79,
+              "peer_signals": 9,
+              "peers_in_sector": 9,
+              "detail": "0.0%(29)+9 strong(50)",
+              "sector_name": "环境保护",
+              "sector_index_perf": "0.0%",
+              "sector_index_code": ""
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -4.32,
+            "10": 0.13,
+            "20": 1.38,
+            "60": -6.55
+          }
+        }
+      ],
+      "benchmark": {
+        "5": -0.59,
+        "10": -0.59,
+        "20": -0.59,
+        "60": -0.59
+      }
+    },
+    {
+      "date": "20251031",
+      "n_signals_p1": 95,
+      "n_signals_p2": 102,
+      "picks": [
+        {
+          "ts_code": "000155.SZ",
+          "detected": true,
+          "total_score": 75,
+          "pattern_type": "W",
+          "pattern_score": 80,
+          "volume_score": 75,
+          "sector_score": 91,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 75,
+          "entry_price": 12.29,
+          "detail": "W?9.9310.15 11.26  |   | 1.6%->18.5% accel 16.9% | 8.2%(41)+4 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 80,
+              "detail": "W?9.9310.15 11.26 ",
+              "left_bottom": 9.93,
+              "right_bottom": 10.15,
+              "neckline": 11.26,
+              "break_confirmed": true,
+              "bottom_spacing": 0.0926
+            },
+            "volume_detail": {
+              "score": 75,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": " ",
+              "recent_vol_ratio": 1.96
+            },
+            "accel_detail": {
+              "acceleration": 0.1695,
+              "trend_status": "",
+              "recent_return": 0.1851,
+              "prior_return": 0.0157,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "1.6%->18.5% accel 16.9%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 4,
+              "peers_in_sector": 4,
+              "detail": "8.2%(41)+4 strong(50)",
+              "sector_name": "新型电力",
+              "sector_index_perf": "8.2%",
+              "sector_index_code": "801730.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 3.09,
+            "10": 2.69,
+            "20": 0.57,
+            "60": 10.25
+          }
+        },
+        {
+          "ts_code": "000657.SZ",
+          "detected": true,
+          "total_score": 75,
+          "pattern_type": "V",
+          "pattern_score": 90,
+          "volume_score": 60,
+          "sector_score": 91,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 75,
+          "entry_price": 23.41,
+          "detail": "V?17.5% 59.4% 11d  | -8.4%->43.4% accel 51.8% | 5.5%(41)+4 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 90,
+              "detail": "V?17.5% 59.4% 11d ",
+              "drop_depth": -0.1753,
+              "recovery_strength": 0.5938,
+              "reverse_days": 11,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": true
+            },
+            "volume_detail": {
+              "score": 60,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 1.56
+            },
+            "accel_detail": {
+              "acceleration": 0.5181,
+              "trend_status": "",
+              "recent_return": 0.4344,
+              "prior_return": -0.0837,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-8.4%->43.4% accel 51.8%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 4,
+              "peers_in_sector": 4,
+              "detail": "5.5%(41)+4 strong(50)",
+              "sector_name": "小金属",
+              "sector_index_perf": "5.5%",
+              "sector_index_code": "801050.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 5.51,
+            "10": -3.5,
+            "20": -5.17,
+            "60": 115.68
+          }
+        },
+        {
+          "ts_code": "000688.SZ",
+          "detected": true,
+          "total_score": 74,
+          "pattern_type": "W",
+          "pattern_score": 82,
+          "volume_score": 90,
+          "sector_score": 76,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 74,
+          "entry_price": 18.14,
+          "detail": "W?13.7713.64 15.86  |    | 0.7%->25.4% accel 24.8% | 5.5%(41)+2 strong(35)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 82,
+              "detail": "W?13.7713.64 15.86 ",
+              "left_bottom": 13.77,
+              "right_bottom": 13.64,
+              "neckline": 15.86,
+              "break_confirmed": true,
+              "bottom_spacing": 0.1518
+            },
+            "volume_detail": {
+              "score": 90,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": "  ",
+              "recent_vol_ratio": 2.49
+            },
+            "accel_detail": {
+              "acceleration": 0.2475,
+              "trend_status": "",
+              "recent_return": 0.2545,
+              "prior_return": 0.007,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "0.7%->25.4% accel 24.8%"
+            },
+            "sector_detail": {
+              "score": 76,
+              "peer_signals": 2,
+              "peers_in_sector": 2,
+              "detail": "5.5%(41)+2 strong(35)",
+              "sector_name": "铅锌",
+              "sector_index_perf": "5.5%",
+              "sector_index_code": "801050.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 4.85,
+            "10": 39.03,
+            "20": 40.68,
+            "60": 63.62
+          }
+        },
+        {
+          "ts_code": "000823.SZ",
+          "detected": true,
+          "total_score": 74,
+          "pattern_type": "V",
+          "pattern_score": 77,
+          "volume_score": 60,
+          "sector_score": 100,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 74,
+          "entry_price": 12.99,
+          "detail": "V?16.9% 15.7% 11d  | -15.9%->7.9% accel 23.8% | 20.0%(50)+4 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 77,
+              "detail": "V?16.9% 15.7% 11d ",
+              "drop_depth": -0.1685,
+              "recovery_strength": 0.157,
+              "reverse_days": 11,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 60,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 0.9
+            },
+            "accel_detail": {
+              "acceleration": 0.2381,
+              "trend_status": "",
+              "recent_return": 0.0789,
+              "prior_return": -0.1592,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-15.9%->7.9% accel 23.8%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 4,
+              "peers_in_sector": 4,
+              "detail": "20.0%(50)+4 strong(50)",
+              "sector_name": "元器件",
+              "sector_index_perf": "20.0%",
+              "sector_index_code": "801085.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 0.85,
+            "10": -3.7,
+            "20": -5.31,
+            "60": 14.01
+          }
+        },
+        {
+          "ts_code": "300301.SZ",
+          "detected": true,
+          "total_score": 74,
+          "pattern_type": "V",
+          "pattern_score": 83,
+          "volume_score": 50,
+          "sector_score": 100,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 74,
+          "entry_price": 2.33,
+          "detail": "V?11.5% 12.6% 11d  | -6.8%->12.6% accel 19.3% | 24.4%(50)+11 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 83,
+              "detail": "V?11.5% 12.6% 11d ",
+              "drop_depth": -0.1154,
+              "recovery_strength": 0.1256,
+              "reverse_days": 11,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": true
+            },
+            "volume_detail": {
+              "score": 50,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": false,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 1.51
+            },
+            "accel_detail": {
+              "acceleration": 0.1932,
+              "trend_status": "",
+              "recent_return": 0.1256,
+              "prior_return": -0.0676,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-6.8%->12.6% accel 19.3%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 11,
+              "peers_in_sector": 11,
+              "detail": "24.4%(50)+11 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 1.72,
+            "10": 6.01,
+            "20": 7.3,
+            "60": 2.58
+          }
+        }
+      ],
+      "benchmark": {
+        "5": 0.82,
+        "10": -0.27,
+        "20": -2.46,
+        "60": -0.23
+      }
+    },
+    {
+      "date": "20250925",
+      "n_signals_p1": 65,
+      "n_signals_p2": 86,
+      "picks": [
+        {
+          "ts_code": "001309.SZ",
+          "detected": true,
+          "total_score": 75,
+          "pattern_type": "V",
+          "pattern_score": 74,
+          "volume_score": 75,
+          "sector_score": 100,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 75,
+          "entry_price": 177.27,
+          "detail": "V?14.8% 109.5% 16d  |   | 1.8%->77.6% accel 75.8% | 24.4%(50)+10 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 74,
+              "detail": "V?14.8% 109.5% 16d ",
+              "drop_depth": -0.148,
+              "recovery_strength": 1.0948,
+              "reverse_days": 16,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 75,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": " ",
+              "recent_vol_ratio": 1.16
+            },
+            "accel_detail": {
+              "acceleration": 0.7579,
+              "trend_status": "",
+              "recent_return": 0.7763,
+              "prior_return": 0.0184,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "1.8%->77.6% accel 75.8%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 10,
+              "peers_in_sector": 10,
+              "detail": "24.4%(50)+10 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 11.69,
+            "10": 3.25,
+            "20": 28.75,
+            "60": 34.82
+          }
+        },
+        {
+          "ts_code": "002371.SZ",
+          "detected": true,
+          "total_score": 74,
+          "pattern_type": "W",
+          "pattern_score": 77,
+          "volume_score": 60,
+          "sector_score": 100,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 74,
+          "entry_price": 453.65,
+          "detail": "W?325.50345.00 427.90  | -4.9%->20.2% accel 25.1% | 24.4%(50)+10 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 77,
+              "detail": "W?325.50345.00 427.90 ",
+              "left_bottom": 325.5,
+              "right_bottom": 345.0,
+              "neckline": 427.9,
+              "break_confirmed": true,
+              "bottom_spacing": 0.2368
+            },
+            "volume_detail": {
+              "score": 60,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 1.4
+            },
+            "accel_detail": {
+              "acceleration": 0.251,
+              "trend_status": "",
+              "recent_return": 0.2019,
+              "prior_return": -0.0491,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-4.9%->20.2% accel 25.1%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 10,
+              "peers_in_sector": 10,
+              "detail": "24.4%(50)+10 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -3.47,
+            "10": -11.95,
+            "20": -10.27,
+            "60": 1.18
+          }
+        },
+        {
+          "ts_code": "003026.SZ",
+          "detected": true,
+          "total_score": 74,
+          "pattern_type": "V",
+          "pattern_score": 70,
+          "volume_score": 75,
+          "sector_score": 100,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 74,
+          "entry_price": 38.28,
+          "detail": "V?12.5% 12.8% 16d  |   | -7.1%->9.0% accel 16.0% | 24.4%(50)+10 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 70,
+              "detail": "V?12.5% 12.8% 16d ",
+              "drop_depth": -0.1246,
+              "recovery_strength": 0.128,
+              "reverse_days": 16,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 75,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": " ",
+              "recent_vol_ratio": 1.84
+            },
+            "accel_detail": {
+              "acceleration": 0.1603,
+              "trend_status": "",
+              "recent_return": 0.0897,
+              "prior_return": -0.0706,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-7.1%->9.0% accel 16.0%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 10,
+              "peers_in_sector": 10,
+              "detail": "24.4%(50)+10 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -3.66,
+            "10": -8.62,
+            "20": -9.43,
+            "60": -18.91
+          }
+        },
+        {
+          "ts_code": "300346.SZ",
+          "detected": true,
+          "total_score": 73,
+          "pattern_type": "W",
+          "pattern_score": 76,
+          "volume_score": 60,
+          "sector_score": 100,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 73,
+          "entry_price": 41.91,
+          "detail": "W?30.9232.78 37.48  | -7.0%->22.0% accel 29.0% | 24.4%(50)+10 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 76,
+              "detail": "W?30.9232.78 37.48 ",
+              "left_bottom": 30.92,
+              "right_bottom": 32.78,
+              "neckline": 37.48,
+              "break_confirmed": true,
+              "bottom_spacing": 0.206
+            },
+            "volume_detail": {
+              "score": 60,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 1.82
+            },
+            "accel_detail": {
+              "acceleration": 0.2901,
+              "trend_status": "",
+              "recent_return": 0.2197,
+              "prior_return": -0.0703,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-7.0%->22.0% accel 29.0%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 10,
+              "peers_in_sector": 10,
+              "detail": "24.4%(50)+10 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -0.5,
+            "10": -9.26,
+            "20": -5.68,
+            "60": 7.54
+          }
+        },
+        {
+          "ts_code": "001287.SZ",
+          "detected": true,
+          "total_score": 72,
+          "pattern_type": "V",
+          "pattern_score": 75,
+          "volume_score": 50,
+          "sector_score": 100,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 72,
+          "entry_price": 21.86,
+          "detail": "V?14.2% 17.0% 12d  | -10.2%->7.2% accel 17.4% | 20.0%(50)+4 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 75,
+              "detail": "V?14.2% 17.0% 12d ",
+              "drop_depth": -0.1416,
+              "recovery_strength": 0.1705,
+              "reverse_days": 12,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 50,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": false,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 0.92
+            },
+            "accel_detail": {
+              "acceleration": 0.1743,
+              "trend_status": "",
+              "recent_return": 0.0721,
+              "prior_return": -0.1022,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-10.2%->7.2% accel 17.4%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 4,
+              "peers_in_sector": 4,
+              "detail": "20.0%(50)+4 strong(50)",
+              "sector_name": "元器件",
+              "sector_index_perf": "20.0%",
+              "sector_index_code": "801085.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 8.23,
+            "10": -0.41,
+            "20": 22.14,
+            "60": 4.35
+          }
+        }
+      ],
+      "benchmark": {
+        "5": 0.51,
+        "10": -1.73,
+        "20": 1.03,
+        "60": 1.39
+      }
+    },
+    {
+      "date": "20250828",
+      "n_signals_p1": 91,
+      "n_signals_p2": 104,
+      "picks": [
+        {
+          "ts_code": "300604.SZ",
+          "detected": true,
+          "total_score": 78,
+          "pattern_type": "W",
+          "pattern_score": 82,
+          "volume_score": 80,
+          "sector_score": 100,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 78,
+          "entry_price": 61.32,
+          "detail": "W?42.7143.12 51.90  |   | 3.2%->36.8% accel 33.5% | 24.4%(50)+14 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 82,
+              "detail": "W?42.7143.12 51.90 ",
+              "left_bottom": 42.71,
+              "right_bottom": 43.12,
+              "neckline": 51.9,
+              "break_confirmed": true,
+              "bottom_spacing": 0.0698
+            },
+            "volume_detail": {
+              "score": 80,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": false,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": " ",
+              "recent_vol_ratio": 2.76
+            },
+            "accel_detail": {
+              "acceleration": 0.3353,
+              "trend_status": "",
+              "recent_return": 0.3675,
+              "prior_return": 0.0322,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "3.2%->36.8% accel 33.5%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 14,
+              "peers_in_sector": 14,
+              "detail": "24.4%(50)+14 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -11.68,
+            "10": -3.62,
+            "20": 54.26,
+            "60": 25.75
+          }
+        },
+        {
+          "ts_code": "000609.SZ",
+          "detected": true,
+          "total_score": 76,
+          "pattern_type": "W",
+          "pattern_score": 89,
+          "volume_score": 90,
+          "sector_score": 76,
+          "accel_score": 85,
+          "fake_score": 20,
+          "ml_score": 0,
+          "final_score": 56,
+          "entry_price": 4.09,
+          "detail": "W?3.003.10 3.64  |    | -2.5%->31.9% accel 34.5% | 6.4%(41)+2 strong(35)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 89,
+              "detail": "W?3.003.10 3.64 ",
+              "left_bottom": 3.0,
+              "right_bottom": 3.1,
+              "neckline": 3.64,
+              "break_confirmed": true,
+              "bottom_spacing": 0.14
+            },
+            "volume_detail": {
+              "score": 90,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": "  ",
+              "recent_vol_ratio": 3.2
+            },
+            "accel_detail": {
+              "acceleration": 0.3445,
+              "trend_status": "",
+              "recent_return": 0.3194,
+              "prior_return": -0.0252,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-2.5%->31.9% accel 34.5%"
+            },
+            "sector_detail": {
+              "score": 76,
+              "peer_signals": 2,
+              "peers_in_sector": 2,
+              "detail": "6.4%(41)+2 strong(35)",
+              "sector_name": "区域地产",
+              "sector_index_perf": "6.4%",
+              "sector_index_code": "801180.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 20,
+              "is_likely_fake": false,
+              "flags": [
+                "(-20)"
+              ],
+              "detail": "(-20)"
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 4.16,
+            "10": 15.65,
+            "20": 1.71,
+            "60": 178.24
+          }
+        },
+        {
+          "ts_code": "300236.SZ",
+          "detected": true,
+          "total_score": 74,
+          "pattern_type": "W",
+          "pattern_score": 75,
+          "volume_score": 65,
+          "sector_score": 100,
+          "accel_score": 85,
+          "fake_score": 25,
+          "ml_score": 0,
+          "final_score": 49,
+          "entry_price": 60.1,
+          "detail": "W?37.3340.73 58.86  | 10.3%->30.5% accel 20.1% | 24.4%(50)+14 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 75,
+              "detail": "W?37.3340.73 58.86 ",
+              "left_bottom": 37.33,
+              "right_bottom": 40.73,
+              "neckline": 58.86,
+              "break_confirmed": true,
+              "bottom_spacing": 0.1698
+            },
+            "volume_detail": {
+              "score": 65,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": false,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 2.23
+            },
+            "accel_detail": {
+              "acceleration": 0.2013,
+              "trend_status": "",
+              "recent_return": 0.3048,
+              "prior_return": 0.1035,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "10.3%->30.5% accel 20.1%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 14,
+              "peers_in_sector": 14,
+              "detail": "24.4%(50)+14 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 25,
+              "is_likely_fake": false,
+              "flags": [
+                "63%(-25)"
+              ],
+              "detail": "63%(-25)"
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -15.82,
+            "10": -12.0,
+            "20": 9.65,
+            "60": -5.09
+          }
+        },
+        {
+          "ts_code": "002058.SZ",
+          "detected": true,
+          "total_score": 73,
+          "pattern_type": "W",
+          "pattern_score": 84,
+          "volume_score": 60,
+          "sector_score": 91,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 73,
+          "entry_price": 15.97,
+          "detail": "W?12.4013.38 15.60  | -1.4%->16.1% accel 17.5% | 8.2%(41)+9 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 84,
+              "detail": "W?12.4013.38 15.60 ",
+              "left_bottom": 12.4,
+              "right_bottom": 13.38,
+              "neckline": 15.6,
+              "break_confirmed": true,
+              "bottom_spacing": 0.2581
+            },
+            "volume_detail": {
+              "score": 60,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 1.39
+            },
+            "accel_detail": {
+              "acceleration": 0.1749,
+              "trend_status": "",
+              "recent_return": 0.1606,
+              "prior_return": -0.0143,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-1.4%->16.1% accel 17.5%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 9,
+              "peers_in_sector": 9,
+              "detail": "8.2%(41)+9 strong(50)",
+              "sector_name": "电气设备",
+              "sector_index_perf": "8.2%",
+              "sector_index_code": "801730.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 11.58,
+            "10": 42.39,
+            "20": 65.87,
+            "60": 35.88
+          }
+        },
+        {
+          "ts_code": "002371.SZ",
+          "detected": true,
+          "total_score": 72,
+          "pattern_type": "W",
+          "pattern_score": 79,
+          "volume_score": 50,
+          "sector_score": 100,
+          "accel_score": 82,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 72,
+          "entry_price": 396.93,
+          "detail": "W?314.33325.50 368.00  | 1.9%->16.2% accel 14.2% | 24.4%(50)+14 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 79,
+              "detail": "W?314.33325.50 368.00 ",
+              "left_bottom": 314.33,
+              "right_bottom": 325.5,
+              "neckline": 368.0,
+              "break_confirmed": true,
+              "bottom_spacing": 0.4268
+            },
+            "volume_detail": {
+              "score": 50,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": false,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 1.88
+            },
+            "accel_detail": {
+              "acceleration": 0.1425,
+              "trend_status": "",
+              "recent_return": 0.1618,
+              "prior_return": 0.0193,
+              "is_accelerating": true,
+              "score": 82,
+              "detail": "1.9%->16.2% accel 14.2%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 14,
+              "peers_in_sector": 14,
+              "detail": "24.4%(50)+14 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -11.58,
+            "10": -4.91,
+            "20": 14.29,
+            "60": 7.8
+          }
+        }
+      ],
+      "benchmark": {
+        "5": -2.21,
+        "10": 1.89,
+        "20": 2.91,
+        "60": 1.41
+      }
+    },
+    {
+      "date": "20250731",
+      "n_signals_p1": 106,
+      "n_signals_p2": 112,
+      "picks": [
+        {
+          "ts_code": "001309.SZ",
+          "detected": true,
+          "total_score": 78,
+          "pattern_type": "V",
+          "pattern_score": 91,
+          "volume_score": 60,
+          "sector_score": 100,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 78,
+          "entry_price": 85.45,
+          "detail": "V?37.8% 10.3% 8d  | -29.3%->2.1% accel 31.4% | 24.4%(50)+14 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 91,
+              "detail": "V?37.8% 10.3% 8d ",
+              "drop_depth": -0.3784,
+              "recovery_strength": 0.1032,
+              "reverse_days": 8,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": true
+            },
+            "volume_detail": {
+              "score": 60,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 1.14
+            },
+            "accel_detail": {
+              "acceleration": 0.314,
+              "trend_status": "",
+              "recent_return": 0.0213,
+              "prior_return": -0.2927,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-29.3%->2.1% accel 31.4%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 14,
+              "peers_in_sector": 14,
+              "detail": "24.4%(50)+14 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 2.86,
+            "10": 8.5,
+            "20": 14.69,
+            "60": 167.1
+          }
+        },
+        {
+          "ts_code": "002213.SZ",
+          "detected": true,
+          "total_score": 70,
+          "pattern_type": "V",
+          "pattern_score": 72,
+          "volume_score": 60,
+          "sector_score": 100,
+          "accel_score": 75,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 70,
+          "entry_price": 17.27,
+          "detail": "V?17.1% 7.7% 7d  |  -13.6%->-0.1% accel 13.5% | 24.4%(50)+14 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 72,
+              "detail": "V?17.1% 7.7% 7d ",
+              "drop_depth": -0.1708,
+              "recovery_strength": 0.0765,
+              "reverse_days": 7,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 60,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 0.83
+            },
+            "accel_detail": {
+              "acceleration": 0.1352,
+              "trend_status": "",
+              "recent_return": -0.0012,
+              "prior_return": -0.1364,
+              "is_accelerating": true,
+              "score": 75,
+              "detail": " -13.6%->-0.1% accel 13.5%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 14,
+              "peers_in_sector": 14,
+              "detail": "24.4%(50)+14 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 9.26,
+            "10": 5.96,
+            "20": 4.75,
+            "60": 62.25
+          }
+        },
+        {
+          "ts_code": "002156.SZ",
+          "detected": true,
+          "total_score": 69,
+          "pattern_type": "W",
+          "pattern_score": 73,
+          "volume_score": 75,
+          "sector_score": 100,
+          "accel_score": 56,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 69,
+          "entry_price": 28.12,
+          "detail": "W?22.9024.76 26.66  |   | 2.6%->7.9% accel 5.3% | 24.4%(50)+14 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 73,
+              "detail": "W?22.9024.76 26.66 ",
+              "left_bottom": 22.9,
+              "right_bottom": 24.76,
+              "neckline": 26.66,
+              "break_confirmed": true,
+              "bottom_spacing": 0.1572
+            },
+            "volume_detail": {
+              "score": 75,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": " ",
+              "recent_vol_ratio": 2.25
+            },
+            "accel_detail": {
+              "acceleration": 0.0535,
+              "trend_status": "",
+              "recent_return": 0.0795,
+              "prior_return": 0.026,
+              "is_accelerating": true,
+              "score": 56,
+              "detail": "2.6%->7.9% accel 5.3%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 14,
+              "peers_in_sector": 14,
+              "detail": "24.4%(50)+14 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -2.03,
+            "10": 1.53,
+            "20": 6.97,
+            "60": 50.96
+          }
+        },
+        {
+          "ts_code": "000551.SZ",
+          "detected": true,
+          "total_score": 68,
+          "pattern_type": "V",
+          "pattern_score": 65,
+          "volume_score": 60,
+          "sector_score": 91,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 68,
+          "entry_price": 10.96,
+          "detail": "V?19.2% 7.3% 20d  | -16.7%->2.0% accel 18.8% | 8.3%(41)+6 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 65,
+              "detail": "V?19.2% 7.3% 20d ",
+              "drop_depth": -0.1925,
+              "recovery_strength": 0.0731,
+              "reverse_days": 20,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 60,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 0.9
+            },
+            "accel_detail": {
+              "acceleration": 0.1879,
+              "trend_status": "",
+              "recent_return": 0.0205,
+              "prior_return": -0.1674,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-16.7%->2.0% accel 18.8%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 6,
+              "peers_in_sector": 6,
+              "detail": "8.3%(41)+6 strong(50)",
+              "sector_name": "专用机械",
+              "sector_index_perf": "8.3%",
+              "sector_index_code": "801890.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 6.57,
+            "10": 7.39,
+            "20": 7.66,
+            "60": 2.1
+          }
+        },
+        {
+          "ts_code": "001226.SZ",
+          "detected": true,
+          "total_score": 68,
+          "pattern_type": "W",
+          "pattern_score": 78,
+          "volume_score": 63,
+          "sector_score": 76,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 68,
+          "entry_price": 40.0,
+          "detail": "W?25.8027.52 39.08  |     ** | 2.8%->37.7% accel 34.9% | 8.3%(41)+2 strong(35)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 78,
+              "detail": "W?25.8027.52 39.08 ",
+              "left_bottom": 25.8,
+              "right_bottom": 27.52,
+              "neckline": 39.08,
+              "break_confirmed": true,
+              "bottom_spacing": 0.1744
+            },
+            "volume_detail": {
+              "score": 63,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": "    **",
+              "recent_vol_ratio": 3.49
+            },
+            "accel_detail": {
+              "acceleration": 0.3493,
+              "trend_status": "",
+              "recent_return": 0.3769,
+              "prior_return": 0.0276,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "2.8%->37.7% accel 34.9%"
+            },
+            "sector_detail": {
+              "score": 76,
+              "peer_signals": 2,
+              "peers_in_sector": 2,
+              "detail": "8.3%(41)+2 strong(35)",
+              "sector_name": "工程机械",
+              "sector_index_perf": "8.3%",
+              "sector_index_code": "801890.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -10.78,
+            "10": -12.65,
+            "20": -11.25,
+            "60": -7.58
+          }
+        }
+      ],
+      "benchmark": {
+        "5": 0.96,
+        "10": 2.4,
+        "20": 9.52,
+        "60": 13.86
+      }
+    },
+    {
+      "date": "20250703",
+      "n_signals_p1": 80,
+      "n_signals_p2": 88,
+      "picks": [
+        {
+          "ts_code": "001270.SZ",
+          "detected": true,
+          "total_score": 80,
+          "pattern_type": "W",
+          "pattern_score": 90,
+          "volume_score": 75,
+          "sector_score": 100,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 80,
+          "entry_price": 39.81,
+          "detail": "W?32.9333.93 38.93  |   | -3.5%->15.3% accel 18.8% | 24.4%(50)+7 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 90,
+              "detail": "W?32.9333.93 38.93 ",
+              "left_bottom": 32.93,
+              "right_bottom": 33.93,
+              "neckline": 38.93,
+              "break_confirmed": true,
+              "bottom_spacing": 0.1822
+            },
+            "volume_detail": {
+              "score": 75,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": " ",
+              "recent_vol_ratio": 1.71
+            },
+            "accel_detail": {
+              "acceleration": 0.1881,
+              "trend_status": "",
+              "recent_return": 0.1529,
+              "prior_return": -0.0352,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-3.5%->15.3% accel 18.8%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 7,
+              "peers_in_sector": 7,
+              "detail": "24.4%(50)+7 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -0.1,
+            "10": 0.18,
+            "20": 0.45,
+            "60": 5.63
+          }
+        },
+        {
+          "ts_code": "001223.SZ",
+          "detected": true,
+          "total_score": 76,
+          "pattern_type": "V",
+          "pattern_score": 90,
+          "volume_score": 68,
+          "sector_score": 91,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 76,
+          "entry_price": 45.3,
+          "detail": "V?28.3% 21.0% 10d  |   | -3.8%->19.7% accel 23.4% | 8.3%(41)+4 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 90,
+              "detail": "V?28.3% 21.0% 10d ",
+              "drop_depth": -0.2827,
+              "recovery_strength": 0.2103,
+              "reverse_days": 10,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": true
+            },
+            "volume_detail": {
+              "score": 68,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": " ",
+              "recent_vol_ratio": 1.5
+            },
+            "accel_detail": {
+              "acceleration": 0.2345,
+              "trend_status": "",
+              "recent_return": 0.1968,
+              "prior_return": -0.0376,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-3.8%->19.7% accel 23.4%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 4,
+              "peers_in_sector": 4,
+              "detail": "8.3%(41)+4 strong(50)",
+              "sector_name": "专用机械",
+              "sector_index_perf": "8.3%",
+              "sector_index_code": "801890.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -3.38,
+            "10": -4.44,
+            "20": -5.47,
+            "60": 14.17
+          }
+        },
+        {
+          "ts_code": "000062.SZ",
+          "detected": true,
+          "total_score": 74,
+          "pattern_type": "V",
+          "pattern_score": 77,
+          "volume_score": 60,
+          "sector_score": 100,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 74,
+          "entry_price": 26.3,
+          "detail": "V?8.7% 14.4% 10d  | -7.2%->8.7% accel 15.9% | 20.0%(50)+4 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 77,
+              "detail": "V?8.7% 14.4% 10d ",
+              "drop_depth": -0.087,
+              "recovery_strength": 0.1435,
+              "reverse_days": 10,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": true
+            },
+            "volume_detail": {
+              "score": 60,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 1.06
+            },
+            "accel_detail": {
+              "acceleration": 0.1593,
+              "trend_status": "",
+              "recent_return": 0.0872,
+              "prior_return": -0.0721,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-7.2%->8.7% accel 15.9%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 4,
+              "peers_in_sector": 4,
+              "detail": "20.0%(50)+4 strong(50)",
+              "sector_name": "元器件",
+              "sector_index_perf": "20.0%",
+              "sector_index_code": "801085.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -0.72,
+            "10": 2.02,
+            "20": -1.9,
+            "60": 12.02
+          }
+        },
+        {
+          "ts_code": "003043.SZ",
+          "detected": true,
+          "total_score": 74,
+          "pattern_type": "V",
+          "pattern_score": 77,
+          "volume_score": 60,
+          "sector_score": 100,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 74,
+          "entry_price": 43.23,
+          "detail": "V?32.0% 10.6% 11d  | -24.6%->7.6% accel 32.2% | 24.4%(50)+7 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 77,
+              "detail": "V?32.0% 10.6% 11d ",
+              "drop_depth": -0.3201,
+              "recovery_strength": 0.1057,
+              "reverse_days": 11,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 60,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 0.42
+            },
+            "accel_detail": {
+              "acceleration": 0.3216,
+              "trend_status": "",
+              "recent_return": 0.0756,
+              "prior_return": -0.246,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-24.6%->7.6% accel 32.2%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 7,
+              "peers_in_sector": 7,
+              "detail": "24.4%(50)+7 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -2.17,
+            "10": -3.22,
+            "20": 0.86,
+            "60": 24.87
+          }
+        },
+        {
+          "ts_code": "002549.SZ",
+          "detected": true,
+          "total_score": 73,
+          "pattern_type": "W",
+          "pattern_score": 86,
+          "volume_score": 75,
+          "sector_score": 79,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 73,
+          "entry_price": 13.26,
+          "detail": "W?8.168.78 11.62  |   | -12.8%->46.7% accel 59.5% | 0.0%(29)+9 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 86,
+              "detail": "W?8.168.78 11.62 ",
+              "left_bottom": 8.16,
+              "right_bottom": 8.78,
+              "neckline": 11.62,
+              "break_confirmed": true,
+              "bottom_spacing": 0.424
+            },
+            "volume_detail": {
+              "score": 75,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": " ",
+              "recent_vol_ratio": 3.17
+            },
+            "accel_detail": {
+              "acceleration": 0.5951,
+              "trend_status": "",
+              "recent_return": 0.4668,
+              "prior_return": -0.1283,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-12.8%->46.7% accel 59.5%"
+            },
+            "sector_detail": {
+              "score": 79,
+              "peer_signals": 9,
+              "peers_in_sector": 9,
+              "detail": "0.0%(29)+9 strong(50)",
+              "sector_name": "环境保护",
+              "sector_index_perf": "0.0%",
+              "sector_index_code": ""
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -13.57,
+            "10": -14.4,
+            "20": -11.09,
+            "60": 107.77
+          }
+        }
+      ],
+      "benchmark": {
+        "5": 1.06,
+        "10": 1.67,
+        "20": 2.71,
+        "60": 15.76
+      }
+    },
+    {
+      "date": "20250605",
+      "n_signals_p1": 95,
+      "n_signals_p2": 105,
+      "picks": [
+        {
+          "ts_code": "301306.SZ",
+          "detected": true,
+          "total_score": 74,
+          "pattern_type": "V",
+          "pattern_score": 71,
+          "volume_score": 90,
+          "sector_score": 91,
+          "accel_score": 85,
+          "fake_score": 20,
+          "ml_score": 0,
+          "final_score": 54,
+          "entry_price": 44.92,
+          "detail": "V?14.6% 32.6% 25d  |    | -4.3%->23.4% accel 27.7% | 8.6%(41)+6 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 71,
+              "detail": "V?14.6% 32.6% 25d ",
+              "drop_depth": -0.1464,
+              "recovery_strength": 0.3262,
+              "reverse_days": 25,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 90,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": "  ",
+              "recent_vol_ratio": 4.79
+            },
+            "accel_detail": {
+              "acceleration": 0.2772,
+              "trend_status": "",
+              "recent_return": 0.2341,
+              "prior_return": -0.0431,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-4.3%->23.4% accel 27.7%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 6,
+              "peers_in_sector": 6,
+              "detail": "8.6%(41)+6 strong(50)",
+              "sector_name": "航空",
+              "sector_index_perf": "8.6%",
+              "sector_index_code": "801740.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 20,
+              "is_likely_fake": false,
+              "flags": [
+                "(-20)"
+              ],
+              "detail": "(-20)"
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 11.46,
+            "10": -1.31,
+            "20": 26.22,
+            "60": 31.17
+          }
+        },
+        {
+          "ts_code": "001309.SZ",
+          "detected": true,
+          "total_score": 67,
+          "pattern_type": "W",
+          "pattern_score": 49,
+          "volume_score": 75,
+          "sector_score": 100,
+          "accel_score": 82,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 67,
+          "entry_price": 122.87,
+          "detail": "W?96.69105.50 138.26  |   | -8.7%->5.4% accel 14.1% | 24.4%(50)+13 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 49,
+              "detail": "W?96.69105.50 138.26 ",
+              "left_bottom": 96.69,
+              "right_bottom": 105.5,
+              "neckline": 138.26,
+              "break_confirmed": false,
+              "bottom_spacing": 0.4299
+            },
+            "volume_detail": {
+              "score": 75,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": " ",
+              "recent_vol_ratio": 2.4
+            },
+            "accel_detail": {
+              "acceleration": 0.141,
+              "trend_status": "",
+              "recent_return": 0.0543,
+              "prior_return": -0.0867,
+              "is_accelerating": true,
+              "score": 82,
+              "detail": "-8.7%->5.4% accel 14.1%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 13,
+              "peers_in_sector": 13,
+              "detail": "24.4%(50)+13 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -0.2,
+            "10": 6.22,
+            "20": -3.72,
+            "60": -20.24
+          }
+        },
+        {
+          "ts_code": "001332.SZ",
+          "detected": true,
+          "total_score": 67,
+          "pattern_type": "V",
+          "pattern_score": 80,
+          "volume_score": 40,
+          "sector_score": 91,
+          "accel_score": 72,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 67,
+          "entry_price": 37.08,
+          "detail": "V?9.9% 22.9% 9d  |   ** | -3.4%->7.3% accel 10.7% | 8.3%(41)+4 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 80,
+              "detail": "V?9.9% 22.9% 9d ",
+              "drop_depth": -0.0991,
+              "recovery_strength": 0.2288,
+              "reverse_days": 9,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": true
+            },
+            "volume_detail": {
+              "score": 40,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "  **",
+              "recent_vol_ratio": 2.61
+            },
+            "accel_detail": {
+              "acceleration": 0.1068,
+              "trend_status": "",
+              "recent_return": 0.0732,
+              "prior_return": -0.0336,
+              "is_accelerating": true,
+              "score": 72,
+              "detail": "-3.4%->7.3% accel 10.7%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 4,
+              "peers_in_sector": 4,
+              "detail": "8.3%(41)+4 strong(50)",
+              "sector_name": "专用机械",
+              "sector_index_perf": "8.3%",
+              "sector_index_code": "801890.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -1.0,
+            "10": -4.8,
+            "20": -0.16,
+            "60": -0.43
+          }
+        },
+        {
+          "ts_code": "300301.SZ",
+          "detected": true,
+          "total_score": 67,
+          "pattern_type": "W",
+          "pattern_score": 78,
+          "volume_score": 75,
+          "sector_score": 100,
+          "accel_score": 40,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 67,
+          "entry_price": 2.04,
+          "detail": "W?1.621.82 1.94  |   |  3.8%->7.4% | 24.4%(50)+13 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 78,
+              "detail": "W?1.621.82 1.94 ",
+              "left_bottom": 1.62,
+              "right_bottom": 1.82,
+              "neckline": 1.94,
+              "break_confirmed": true,
+              "bottom_spacing": 0.2531
+            },
+            "volume_detail": {
+              "score": 75,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": " ",
+              "recent_vol_ratio": 2.68
+            },
+            "accel_detail": {
+              "acceleration": 0.0354,
+              "trend_status": "",
+              "recent_return": 0.0737,
+              "prior_return": 0.0383,
+              "is_accelerating": false,
+              "score": 40,
+              "detail": " 3.8%->7.4%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 13,
+              "peers_in_sector": 13,
+              "detail": "24.4%(50)+13 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 8.33,
+            "10": 2.45,
+            "20": 26.96,
+            "60": 9.31
+          }
+        },
+        {
+          "ts_code": "300900.SZ",
+          "detected": true,
+          "total_score": 67,
+          "pattern_type": "V",
+          "pattern_score": 66,
+          "volume_score": 60,
+          "sector_score": 91,
+          "accel_score": 78,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 67,
+          "entry_price": 23.71,
+          "detail": "V?12.1% 29.0% 27d  | -2.5%->10.5% accel 12.9% | 8.6%(41)+6 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 66,
+              "detail": "V?12.1% 29.0% 27d ",
+              "drop_depth": -0.1206,
+              "recovery_strength": 0.2901,
+              "reverse_days": 27,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 60,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 1.03
+            },
+            "accel_detail": {
+              "acceleration": 0.1294,
+              "trend_status": "",
+              "recent_return": 0.1048,
+              "prior_return": -0.0245,
+              "is_accelerating": true,
+              "score": 78,
+              "detail": "-2.5%->10.5% accel 12.9%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 6,
+              "peers_in_sector": 6,
+              "detail": "8.6%(41)+6 strong(50)",
+              "sector_name": "航空",
+              "sector_index_perf": "8.6%",
+              "sector_index_code": "801740.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -3.37,
+            "10": -7.89,
+            "20": -0.76,
+            "60": -10.88
+          }
+        }
+      ],
+      "benchmark": {
+        "5": 0.38,
+        "10": -0.89,
+        "20": 2.33,
+        "60": 15.12
+      }
+    },
+    {
+      "date": "20250306",
+      "n_signals_p1": 105,
+      "n_signals_p2": 111,
+      "picks": [
+        {
+          "ts_code": "000809.SZ",
+          "detected": true,
+          "total_score": 76,
+          "pattern_type": "V",
+          "pattern_score": 82,
+          "volume_score": 83,
+          "sector_score": 91,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 76,
+          "entry_price": 3.16,
+          "detail": "V?17.5% 17.5% 12d  |    | -7.8%->12.1% accel 19.9% | 8.2%(41)+8 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 82,
+              "detail": "V?17.5% 17.5% 12d ",
+              "drop_depth": -0.1748,
+              "recovery_strength": 0.1747,
+              "reverse_days": 12,
+              "drop_volume_surge": true,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 83,
+              "breakout_volume_confirmed": true,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "  ",
+              "recent_vol_ratio": 2.45
+            },
+            "accel_detail": {
+              "acceleration": 0.199,
+              "trend_status": "",
+              "recent_return": 0.1206,
+              "prior_return": -0.0784,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-7.8%->12.1% accel 19.9%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 8,
+              "peers_in_sector": 8,
+              "detail": "8.2%(41)+8 strong(50)",
+              "sector_name": "电气设备",
+              "sector_index_perf": "8.2%",
+              "sector_index_code": "801730.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 4.11,
+            "10": 5.7,
+            "20": 3.48,
+            "60": 1.9
+          }
+        },
+        {
+          "ts_code": "000573.SZ",
+          "detected": true,
+          "total_score": 72,
+          "pattern_type": "V",
+          "pattern_score": 90,
+          "volume_score": 60,
+          "sector_score": 76,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 72,
+          "entry_price": 4.5,
+          "detail": "V?24.5% 32.9% 10d  | -6.4%->9.2% accel 15.6% | 6.4%(41)+2 strong(35)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 90,
+              "detail": "V?24.5% 32.9% 10d ",
+              "drop_depth": -0.2449,
+              "recovery_strength": 0.3292,
+              "reverse_days": 10,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": true
+            },
+            "volume_detail": {
+              "score": 60,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": true,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 0.92
+            },
+            "accel_detail": {
+              "acceleration": 0.1559,
+              "trend_status": "",
+              "recent_return": 0.0922,
+              "prior_return": -0.0636,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-6.4%->9.2% accel 15.6%"
+            },
+            "sector_detail": {
+              "score": 76,
+              "peer_signals": 2,
+              "peers_in_sector": 2,
+              "detail": "6.4%(41)+2 strong(35)",
+              "sector_name": "区域地产",
+              "sector_index_perf": "6.4%",
+              "sector_index_code": "801180.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -5.33,
+            "10": 5.56,
+            "20": -0.44,
+            "60": 0.44
+          }
+        },
+        {
+          "ts_code": "300223.SZ",
+          "detected": true,
+          "total_score": 71,
+          "pattern_type": "V",
+          "pattern_score": 70,
+          "volume_score": 65,
+          "sector_score": 100,
+          "accel_score": 78,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 71,
+          "entry_price": 87.4,
+          "detail": "V?14.4% 44.6% 30d  | 0.5%->13.4% accel 12.8% | 24.4%(50)+13 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 70,
+              "detail": "V?14.4% 44.6% 30d ",
+              "drop_depth": -0.1444,
+              "recovery_strength": 0.4458,
+              "reverse_days": 30,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 65,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": false,
+              "volume_divergence": false,
+              "consecutive_volume": true,
+              "detail": "",
+              "recent_vol_ratio": 1.23
+            },
+            "accel_detail": {
+              "acceleration": 0.1284,
+              "trend_status": "",
+              "recent_return": 0.1336,
+              "prior_return": 0.0052,
+              "is_accelerating": true,
+              "score": 78,
+              "detail": "0.5%->13.4% accel 12.8%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 13,
+              "peers_in_sector": 13,
+              "detail": "24.4%(50)+13 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -11.73,
+            "10": -11.84,
+            "20": -19.22,
+            "60": -25.37
+          }
+        },
+        {
+          "ts_code": "001301.SZ",
+          "detected": true,
+          "total_score": 70,
+          "pattern_type": "V",
+          "pattern_score": 76,
+          "volume_score": 50,
+          "sector_score": 91,
+          "accel_score": 85,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 70,
+          "entry_price": 56.94,
+          "detail": "V?19.0% 18.0% 13d  | -9.6%->10.8% accel 20.4% | 8.2%(41)+8 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 76,
+              "detail": "V?19.0% 18.0% 13d ",
+              "drop_depth": -0.1905,
+              "recovery_strength": 0.1805,
+              "reverse_days": 13,
+              "drop_volume_surge": false,
+              "recovery_volume_surge": false
+            },
+            "volume_detail": {
+              "score": 50,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": false,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 0.83
+            },
+            "accel_detail": {
+              "acceleration": 0.2041,
+              "trend_status": "",
+              "recent_return": 0.1078,
+              "prior_return": -0.0963,
+              "is_accelerating": true,
+              "score": 85,
+              "detail": "-9.6%->10.8% accel 20.4%"
+            },
+            "sector_detail": {
+              "score": 91,
+              "peer_signals": 8,
+              "peers_in_sector": 8,
+              "detail": "8.2%(41)+8 strong(50)",
+              "sector_name": "电气设备",
+              "sector_index_perf": "8.2%",
+              "sector_index_code": "801730.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": -1.67,
+            "10": 7.48,
+            "20": 1.97,
+            "60": -19.04
+          }
+        },
+        {
+          "ts_code": "003043.SZ",
+          "detected": true,
+          "total_score": 67,
+          "pattern_type": "W",
+          "pattern_score": 71,
+          "volume_score": 50,
+          "sector_score": 100,
+          "accel_score": 66,
+          "fake_score": 0,
+          "ml_score": 0,
+          "final_score": 67,
+          "entry_price": 47.67,
+          "detail": "W?37.7041.45 46.80  | 1.8%->10.6% accel 8.8% | 24.4%(50)+13 strong(50)",
+          "components": {
+            "pattern_detail": {
+              "detected": true,
+              "score": 71,
+              "detail": "W?37.7041.45 46.80 ",
+              "left_bottom": 37.7,
+              "right_bottom": 41.45,
+              "neckline": 46.8,
+              "break_confirmed": true,
+              "bottom_spacing": 0.187
+            },
+            "volume_detail": {
+              "score": 50,
+              "breakout_volume_confirmed": false,
+              "pullback_volume_shrinking": false,
+              "volume_divergence": false,
+              "consecutive_volume": false,
+              "detail": "",
+              "recent_vol_ratio": 1.69
+            },
+            "accel_detail": {
+              "acceleration": 0.0878,
+              "trend_status": "",
+              "recent_return": 0.1058,
+              "prior_return": 0.0179,
+              "is_accelerating": true,
+              "score": 66,
+              "detail": "1.8%->10.6% accel 8.8%"
+            },
+            "sector_detail": {
+              "score": 100,
+              "peer_signals": 13,
+              "peers_in_sector": 13,
+              "detail": "24.4%(50)+13 strong(50)",
+              "sector_name": "半导体",
+              "sector_index_perf": "24.4%",
+              "sector_index_code": "801081.SI"
+            },
+            "ml_score": 0,
+            "fake_detail": {
+              "fake_score": 0,
+              "is_likely_fake": false,
+              "flags": [],
+              "detail": ""
+            }
+          },
+          "timestamp": "2026-05-01 09:09",
+          "forward_returns": {
+            "5": 1.74,
+            "10": 4.93,
+            "20": 10.97,
+            "60": 11.81
+          }
+        }
+      ],
+      "benchmark": {
+        "5": -1.13,
+        "10": 0.47,
+        "20": -2.39,
+        "60": -1.99
+      }
+    }
+  ],
+  "total_picks": 50,
+  "picks_per_date": 5.0
+}
