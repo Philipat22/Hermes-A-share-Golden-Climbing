@@ -1,47 +1,23 @@
-# Environment (Tokens etc.)
-.env
-.env.local
-.env.production
+# Data files (use Git LFS or rebuild script)
+data/cache/*.pkl
+!data/cache/golden_pit_batch_results.pkl
+data/models/*.json
+data/models/*.csv
 
 # Python
 __pycache__/
-*.py[cod]
+*.pyc
+.venv/
 *.egg-info/
-.eggs/
-dist/
-build/
-*.egg
-
-# Data cache
-data/cache/
-*.pkl
-*.parquet
-
-# Poetry
-poetry.lock
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
 
-# Debug & test files (root directory)
-test_*.py
-diagnose_*.py
-diag_*.py
-check_*.py
-scan_*.py
-status_check*.py
-optimize_prompts*.py
-fix_*.py
-tushare_cols.py
-find_*.py
-
-# Aider logs
-.aider*
-.aider
+# Env
+.env
+*.token
 
 # OS
-Thumbs.db
 .DS_Store
+Thumbs.db

@@ -1,0 +1,2 @@
+# Git LFS 跟踪大文件
+*.pkl filter=lfs diff=lfs merge=lfs -text
