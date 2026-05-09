@@ -754,45 +754,51 @@ def daily_generate(max_stocks: int = 2000, min_price: float = 3.0,
     else:
         print("[板块] 无行业数据, 行业大师降级")
 
-    # ── Layer 1+2 ──
-    print(f"\n=== Layer 1+2: 大师分析 ({len(prices_dict)}只) ===")
+    # ── Layer 1+2: 策略选择 ──
+    gp_open, gp_csi, gp_ma60 = check_csi300_ma60()
+    print(f"\n=== 市场: {'牛市(黄金坑)' if gp_open else '熊市(v5.2)'} CSI300={gp_csi:.0f} MA60={gp_ma60:.0f} ===\n")
+    
     picks = []
-    done = 0
-    stat_total = 0; stat_pass = 0; stat_qual = 0
+    gp_signals = []
+    stat_total = stat_pass = stat_qual = 0
     
-    for code, df in prices_dict.items():
+    if gp_open:
+        # ═══ 牛市: 黄金坑策略 ═══
+        print(f"=== ⛏️ 黄金坑策略 ===")
+        gp_name_map = {}
         try:
-            c = float(df['close'].iloc[-1])
-            if c < min_price or c > max_price: continue
+            gp_batch = pd.read_pickle(os.path.join(CACHE, "golden_pit_batch_results.pkl"))
+            gp_name_map = {s['code']: s['name'] for s in gp_batch}
+        except: pass
+        gp_signals = scan_golden_pit(prices_dict, ind_map, gp_name_map)
+        stat_total = stat_pass = stat_qual = len(gp_signals)
+        print(f"  信号: {len(gp_signals)}只 (TOP4: {', '.join(s['name'] for s in gp_signals[:4]) if len(gp_signals)>=4 else 'N/A'})")
+        picks = [{'ts_code': s['code'], 'name': s['name'], 'industry': s['industry'],
+                  'close': s['price'], 'votes': s['trend'], 'qualified': True} for s in gp_signals[:4]]
+    else:
+        # ═══ 熊市: v5.2大师共识 ═══
+        print(f"=== Layer 1+2: 大师分析 ({len(prices_dict)}只) ===")
+        for code, df in prices_dict.items():
+            try:
+                c = float(df['close'].iloc[-1])
+                if c < min_price or c > max_price: continue
+                passed, _ = check_quality(code, df, fundamentals)
+                if not passed: continue
+                stat_pass += 1
+                ind = ind_map.get(code, '')
+                sec_ret = sector_ret60_map.get(ind, 0)
+                result = analyze_one_stock(code, df, fundamentals, sec_ret)
+                stat_total += 1
+                if result['qualified']:
+                    if has_fund and code in fundamentals:
+                        result['pe'] = fundamentals[code].get('pe_ttm', 999)
+                    picks.append(result)
+                    stat_qual += 1
+            except: continue
+        picks.sort(key=lambda x: x.get('score', 0), reverse=True)
+        print(f"  大师分析完成: {stat_total}只, ★★★★: {stat_qual}")
 
-            # Quality Gate
-            passed, q_reason = check_quality(code, df, fundamentals)
-            if not passed: continue
-            
-            stat_pass += 1
-            ind = ind_map.get(code, '')
-            sec_ret = sector_ret60_map.get(ind, 0)
-            result = analyze_one_stock(code, df, fundamentals, sec_ret)
-            stat_total += 1
-            
-            # v5.2: 只收qualified信号
-            if result['qualified']:
-                if has_fund and code in fundamentals:
-                    result['pe'] = fundamentals[code].get('pe_ttm', 999)
-                picks.append(result)
-                stat_qual += 1
-            done += 1
-            if done % 100 == 0:
-                print(f"  进度: {done}/{len(prices_dict)} (候选{len(picks)}, 合格{stat_qual})")
-        except Exception as e:
-            if done < 3:
-                print(f"  ⚠ {code} 分析失败: {e}")
-            continue
-    
-    # v5.2: 按score排名(量比+跌幅)
-    picks.sort(key=lambda x: x.get('score', 0), reverse=True)
-    
-    # ── Layer 2.5: AI启动扫描 ──
+    # ── AI启动扫描 (牛熊都跑) ──
     print(f"\n=== AI启动扫描 ===")
     ai_startups = []
     ai_sectors = {'半导体','通信设备','IT设备','软件服务','互联网','元器件','电气设备','专用机械'}
