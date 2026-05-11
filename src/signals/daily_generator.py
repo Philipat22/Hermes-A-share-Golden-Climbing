@@ -626,7 +626,7 @@ def write_report(picks: list[dict], gate: dict, stock_count: int,
             f.write(f"\n## ⛏️ 黄金坑策略 (牛市趋势回调)\n\n")
             f.write(f"- CSI300: {gp_csi:.0f} | MA60: {gp_ma60:.0f} | {'✅ 牛市模式' if gp_open else '❌ 闸门关闭'}\n")
             f.write(f"- 策略: 趋势4-5/5 + 跌速>0.5%/d + 深度-10~-18% + 5天内触达\n")
-            f.write(f"- 信号: {len(gp_signals)}只 | 精选TOP4 | 持有50-60天到期\n\n")
+            f.write(f"- 信号: {len(gp_signals)}只 | 精选TOP4 | 持有40天到期\n\n")
             
             if gp_top:
                 f.write("| # | 代码 | 名称 | 行业 | 趋势 | 回调 | 跌速 | 量比 | 120d | 现价 |\n")
