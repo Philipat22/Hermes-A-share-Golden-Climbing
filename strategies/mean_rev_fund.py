@@ -81,18 +81,18 @@ def create_mean_rev_accel(engine):
 
 MEAN_REV_ACCEL = StrategyDef(
     name="golden_bull",
-    description="金牛: DD40/DDpeak双入口 + 净利加速 + OCF>0 + 5d确认. WR82% +17.7%(60d). 满仓3只.",
+    description="金牛BOTH: DD40≤-20% AND DDpeak≤-20% + 净利加速 + OCF>0 + 5d确认. WR86% +20.4%(60d). 满仓3只.",
     create_signal_filter=create_mean_rev_accel,
     status=Status.ACTIVE,
     tags=["reversal", "fundamental", "earnings", "cashflow", "primary"],
     backtest=BacktestResult(
-        n_signals=225, median=0.177, win_rate=0.82,
-        left_tail_5=-0.111, left_tail_1=-0.251,
-        median_diff=0.157, wf_stable=False, wf_range=0.08,
+        n_signals=132, median=0.204, win_rate=0.86,
+        left_tail_5=-0.08, left_tail_1=-0.20,
+        median_diff=0.184, wf_stable=False, wf_range=0.08,
         date_validated="2026-06-06",
-        notes="金牛策略定稿。Dual entry (DD40/DDpeak<=-20%), 5d confirm, MA20 trail. "
-              "Full position 3 stocks. Hot sector filter. -15% hard stop. "
-              "7yr simulated: 11 rounds, +13.9%/round, WR 91%. CAGR ~20%.",
+        notes="金牛BOTH定稿。需DD40 AND DDpeak同时<=-20%。5d确认, MA20 trail, -15%硬止损。"
+              "满仓3只×33%。赢家86%中位+20.4%峰值40d。输家14%峰值9d+16.6%→MA20约20d捕获。"
+              "所有信号均反弹过(无一直跌的)。热门板块优于冷门(+7pp)。",
     ),
 )
 register(MEAN_REV_ACCEL)
