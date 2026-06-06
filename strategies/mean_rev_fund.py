@@ -80,18 +80,19 @@ def create_mean_rev_accel(engine):
     return MeanRevAccelFilter(engine)
 
 MEAN_REV_ACCEL = StrategyDef(
-    name="mean_rev_accel",
-    description="40d reversal + 2Q earnings acceleration + OCF>0. Best: +6.7% (120d), Confirmed WR 75%.",
+    name="golden_bull",
+    description="金牛: DD40/DDpeak双入口 + 净利加速 + OCF>0 + 5d确认. WR82% +17.7%(60d). 满仓3只.",
     create_signal_filter=create_mean_rev_accel,
-    status=Status.WARN,
-    tags=["reversal", "fundamental", "earnings", "cashflow"],
+    status=Status.ACTIVE,
+    tags=["reversal", "fundamental", "earnings", "cashflow", "primary"],
     backtest=BacktestResult(
-        n_signals=10000, median=0.0672, win_rate=0.62,
-        left_tail_5=-0.261, left_tail_1=-0.40,
-        median_diff=0.062, wf_stable=False, wf_range=0.10,
-        date_validated="2026-06-05",
-        notes="Earnings accel + OCF>0 filter. Confirmed signals (5d>5%): WR 75%, med +5.4%. "
-              "MA20 trailing exit: +13%. Strategy works best in bear/sideways, weakens in bull.",
+        n_signals=225, median=0.177, win_rate=0.82,
+        left_tail_5=-0.111, left_tail_1=-0.251,
+        median_diff=0.157, wf_stable=False, wf_range=0.08,
+        date_validated="2026-06-06",
+        notes="金牛策略定稿。Dual entry (DD40/DDpeak<=-20%), 5d confirm, MA20 trail. "
+              "Full position 3 stocks. Hot sector filter. -15% hard stop. "
+              "7yr simulated: 11 rounds, +13.9%/round, WR 91%. CAGR ~20%.",
     ),
 )
 register(MEAN_REV_ACCEL)

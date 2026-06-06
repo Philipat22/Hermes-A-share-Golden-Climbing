@@ -10,18 +10,22 @@ PRICES = ROOT + r"\data\cache\prices_full.pkl"
 CSI300 = ROOT + r"\data\cache\csi300.pkl"
 
 today = datetime.now()
-today_str = today.strftime('%Y%m%d')
-lookback = (today - pd.Timedelta(days=5)).strftime('%Y%m%d')
-csi_lb = (today - pd.Timedelta(days=20)).strftime('%Y%m%d')
-
-print("[1/4] Connect Tushare...")
+# Find last trading day
 import tushare as ts
-pro = ts.pro_api(TOKEN)
+pro_cal = ts.pro_api(TOKEN)
+cal = pro_cal.trade_cal(exchange='SSE', start_date=(today-pd.Timedelta(days=10)).strftime('%Y%m%d'), end_date=today.strftime('%Y%m%d'))
+cal = cal[cal['is_open']==1].sort_values('cal_date', ascending=False)
+if len(cal) == 0:
+    print('No trading day found in last 10 days'); exit()
+last_trade_day = pd.Timestamp(cal.iloc[0]['cal_date'])
+print(f'Last trading day: {last_trade_day.date()}')
+today_str = last_trade_day.strftime('%Y%m%d')
+lookback = (last_trade_day - pd.Timedelta(days=7)).strftime('%Y%m%d')
+csi_lb = (last_trade_day - pd.Timedelta(days=30)).strftime('%Y%m%d')
 
-cal = pro.trade_cal(exchange='SSE', start_date=today_str, end_date=today_str)
-if len(cal) == 0 or cal.iloc[0]['is_open'] != 1:
-    print("Not a trading day"); sys.exit(1)
-print("Trading day [OK]")
+# Already found last_trade_day above
+print(f'Using trading day: {last_trade_day.date()}')
+pro = ts.pro_api(TOKEN)
 
 print("\n[2/4] Load prices...")
 with open(PRICES, 'rb') as f:
