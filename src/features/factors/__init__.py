@@ -1,1 +1,0 @@
-"""Alpha factor definitions"""

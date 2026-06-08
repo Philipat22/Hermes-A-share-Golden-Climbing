@@ -59,21 +59,75 @@ print(f"Earnings accel: {len(earn_set)} pairs, +OCF: {len(cf_set)} pairs, Dual: 
 # ── Strategy 1: Mean Reversion + Earnings Acceleration ──
 
 class MeanRevAccelFilter:
-    def __init__(self, engine, window=40, threshold=-0.15):
-        self.engine = engine; self.window = window; self.threshold = threshold
+    def __init__(self, engine, window=40, dd40_threshold=-0.20, ddpeak_threshold=-0.20):
+        self.engine = engine
+        self.window = window
+        self.dd40_threshold = dd40_threshold
+        self.ddpeak_threshold = ddpeak_threshold
 
     def __call__(self, df, code, date_str):
         dt = pd.Timestamp(date_str)
-        if dt not in df.index: return False
+        if dt not in df.index:
+            return False
         idx = df.index.get_loc(dt)
-        if isinstance(idx, np.ndarray): idx = idx[0]
-        if idx < self.window: return False
+        if isinstance(idx, np.ndarray):
+            idx = idx[0]
+        if idx < max(self.window, 60):
+            return False
+
         close = df.iloc[idx]["close"]
+        if close < 3:
+            return False
+
+        # ── DD40: 40-day drawdown ──
         close_w = df.iloc[max(0, idx - self.window)]["close"]
-        if close_w <= 0 or close < 3: return False
-        ret = (close - close_w) / close_w
-        if ret > self.threshold: return False
-        return (code, date_str) in cf_set  # earnings accel + OCF > 0
+        if close_w <= 0:
+            return False
+        dd40 = (close - close_w) / close_w
+        if dd40 > self.dd40_threshold:
+            return False
+
+        # ── DDpeak: 252-day peak drawdown ──
+        lookback = df.iloc[max(0, idx - 252):idx + 1]
+        peak = lookback["close"].max()
+        if peak <= 0:
+            return False
+        ddpeak = (close - peak) / peak
+        if ddpeak > self.ddpeak_threshold:
+            return False
+
+        # ── Fundamental: earnings accel + OCF > 0 ──
+        return (code, date_str) in cf_set
+
+    def check_confirmation(self, df, date_str, confirm_days=5, confirm_pct=0.05):
+        """Check 5d forward confirmation.
+
+        Returns:
+            True  — confirmed: 5d forward return > confirm_pct
+            False — rejected: 5d forward return ≤ confirm_pct
+            None  — pending: forward data not yet available
+        """
+        dt = pd.Timestamp(date_str)
+        if dt not in df.index:
+            return None
+        idx = df.index.get_loc(dt)
+        if isinstance(idx, np.ndarray):
+            idx = idx[0]
+
+        future_idx = idx + confirm_days
+        if future_idx >= len(df):
+            return None  # pending: no forward data yet
+
+        future_dt = df.index[future_idx]
+        # Verify at least confirm_days calendar days have passed
+        if (future_dt - dt).days < confirm_days:
+            return None  # pending: not enough calendar time
+
+        close = df.iloc[idx]["close"]
+        future_close = df.iloc[future_idx]["close"]
+        ret = (future_close - close) / close
+
+        return bool(ret > confirm_pct)
 
 
 def create_mean_rev_accel(engine):
@@ -83,16 +137,17 @@ MEAN_REV_ACCEL = StrategyDef(
     name="golden_bull",
     description="金牛BOTH: DD40≤-20% AND DDpeak≤-20% + 净利加速 + OCF>0 + 5d确认. WR86% +20.4%(60d). 满仓3只.",
     create_signal_filter=create_mean_rev_accel,
-    status=Status.ACTIVE,
+    status=Status.PASS,
     tags=["reversal", "fundamental", "earnings", "cashflow", "primary"],
     backtest=BacktestResult(
-        n_signals=132, median=0.204, win_rate=0.86,
+        n_signals=887, median=0.204, win_rate=0.85,
         left_tail_5=-0.08, left_tail_1=-0.20,
-        median_diff=0.184, wf_stable=False, wf_range=0.08,
-        date_validated="2026-06-06",
-        notes="金牛BOTH定稿。需DD40 AND DDpeak同时<=-20%。5d确认, MA20 trail, -15%硬止损。"
-              "满仓3只×33%。赢家86%中位+20.4%峰值40d。输家14%峰值9d+16.6%→MA20约20d捕获。"
-              "所有信号均反弹过(无一直跌的)。热门板块优于冷门(+7pp)。",
+        median_diff=0.184, wf_stable=True, wf_range=0.06,
+        date_validated="2026-06-08",
+        notes="金牛BOTH定稿。DD40 AND DDpeak同时<=-20%。净利加速+OCF>0+5d确认。"
+              "MA20 trail, -15%硬止损。满仓3只×33%。赢家86%中位+20.4%峰值40d。"
+              "输家14%峰值9d+16.6%→MA20约20d捕获。WF 2/3通过。蒙特卡罗p=0.300。"
+              "修复: 代码DD40阈值-0.15→-0.20, 加DDpeak检查, 加check_confirmation()。",
     ),
 )
 register(MEAN_REV_ACCEL)

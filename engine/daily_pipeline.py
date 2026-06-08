@@ -42,6 +42,31 @@ def daily_pipeline(strategy_name: str, date_str: str, top_n: int = 15):
     signal_filter = strat.create_signal_filter(engine_adapter)
     candidates = scanner.scan(date_str, signal_filter)
 
+    # ── 5d forward confirmation check ──
+    n_confirmed = 0
+    n_rejected = 0
+    n_pending = 0
+    has_check_confirmation = hasattr(signal_filter, 'check_confirmation')
+
+    for c in candidates:
+        if has_check_confirmation:
+            df = scanner.prices.get(c.code)
+            if df is not None:
+                result = signal_filter.check_confirmation(df, c.date)
+                c.confirmed = result
+                if result is True:
+                    n_confirmed += 1
+                elif result is False:
+                    n_rejected += 1
+                else:
+                    n_pending += 1
+            else:
+                c.confirmed = None
+                n_pending += 1
+        else:
+            c.confirmed = None
+            n_pending += 1
+
     regime = scanner.regime_at(date_str)
 
     # ── Determine max DD, market signals ──
@@ -78,26 +103,34 @@ def daily_pipeline(strategy_name: str, date_str: str, top_n: int = 15):
         f"  DAILY REPORT - {date_str}",
         f"  Strategy: {strat.name} - {strat.description}",
         f"  Regime: {regime.upper()} | NorthMargin: {'ON' if nm_active else 'OFF'}",
-        f"  Candidates: {len(candidates)}",
+        f"  Candidates: {len(candidates)} | Confirmed: {n_confirmed} | Rejected: {n_rejected} | Pending: {n_pending}",
         "=" * 60,
-        f"  {'Code':<12s} {'Price':>8s} {'DD':>8s}",
-        f"  {'-'*12} {'-'*8} {'-'*8}",
+        f"  {'Code':<12s} {'Price':>8s} {'DD':>8s} {'Confirmed':>10s}",
+        f"  {'-'*12} {'-'*8} {'-'*8} {'-'*10}",
     ]
 
     for c in candidates[:top_n]:
         dd_str = f"{c.dd:>+7.1%}" if c.dd is not None else "     N/A"
-        lines.append(f"  {c.code:<12s} {c.close:>8.2f} {dd_str}")
+        if c.confirmed is True:
+            cf_str = "YES"
+        elif c.confirmed is False:
+            cf_str = "NO"
+        else:
+            cf_str = "pending"
+        lines.append(f"  {c.code:<12s} {c.close:>8.2f} {dd_str} {cf_str:>10s}")
 
     # ── Position sizing based on regime ──
     sizer = PositionSizer()
-    plan = sizer.plan(regime, is_confirmed=False)
+    has_confirmed = n_confirmed > 0
+    plan = sizer.plan(regime, is_confirmed=has_confirmed)
     
     rec = plan.scout_pct
     med = bt.median if bt else 0.0
     wr = bt.win_rate if bt else 0.0
+    cf_note = f" ({n_confirmed} confirmed → full allocation)" if has_confirmed else f" ({n_pending} pending → scout only)"
     lines.extend([
         "",
-        f"  Position: scout {plan.scout_pct:.0%} → target {plan.target_pct:.0%} (regime ×{plan.regime_multiplier:.0%})",
+        f"  Position: scout {plan.scout_pct:.0%} → target {plan.target_pct:.0%}{cf_note}",
         f"  Regime advice: {MarketRegime.regime_advice(regime)}",
         f"  Hard stops: -5% daily / -15% trade | Account: 40000",
         f"  Backtest: median={med:+.1%}, WR={wr:.0%}",

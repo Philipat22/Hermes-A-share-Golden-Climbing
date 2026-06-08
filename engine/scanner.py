@@ -22,6 +22,7 @@ class Candidate:
     close: float
     dd: Optional[float] = None
     regime: str = "unknown"
+    confirmed: Optional[bool] = None  # True=confirmed, False=rejected, None=pending
 
 
 class Scanner:
